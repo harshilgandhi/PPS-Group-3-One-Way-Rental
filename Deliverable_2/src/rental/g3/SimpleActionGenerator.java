@@ -198,7 +198,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				continue;
 			// find nearby empty cars
 			for (int cid = 0; cid < game.nCar; cid++) {
-				if (game.cars[cid].inuse == true || 
+				if (game.cars[cid].inuse == true || game.cars[cid].isDeposit || 
 					game.rndist(rid, game.cars[cid].location) > Pickup.MaxPickupDist)
 					continue;
 				pickups.add(new Pickup(oid, cid, game.relocators[oid].location, game.cars[cid].source));				
