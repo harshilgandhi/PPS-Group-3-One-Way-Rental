@@ -133,7 +133,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 							new Route(picks.get(i).cid, game.cars[picks.get(i).cid].destination));
 					game.relocators[picks.get(i).rid].pickuper = rid;
 					game.relocators[picks.get(i).rid].cid = picks.get(i).cid;
-					game.cars[picks.get(i).cid].inuse = true;					
+					game.cars[picks.get(i).cid].inuse = true;
+					game.cars[picks.get(i).cid].driver = picks.get(i).rid;
 				}
 			}
 			else { // if the car is full, do not reroute, just follow the route 	
@@ -158,11 +159,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				continue;
 			game.relocators[rgid.rid].setNext(RelocatorStatus.PASSENGER, nextLoc);			
 		}
-		
-		if (r.location == nextLoc) {
-			System.out.println("BUG FROM ENROUTE 2!");
-		}
-		
+			
 		// generate a drive
 		Drive drive = new Drive(rid, r.cid, toDeposit, game.cars[r.cid].passengers.toArray(new RGid[0]), 
 				game.graph.getNodeName(nextLoc));
