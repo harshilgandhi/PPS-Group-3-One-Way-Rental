@@ -127,7 +127,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 				for (int i = 0; i < pickCount; i++) {
 					if (picks.get(i).dropLoc != r.firstRoute().dst)
 						r.pushRoute(new Route(r.cid, picks.get(i).dropLoc));
-					r.pushRoute(new Route(r.cid, picks.get(i).pickLoc));
+					if (r.location != picks.get(i).pickLoc)
+						r.pushRoute(new Route(r.cid, picks.get(i).pickLoc));
 					game.relocators[picks.get(i).rid].pushRoute(
 							new Route(picks.get(i).cid, game.cars[picks.get(i).cid].destination));
 					game.relocators[picks.get(i).rid].pickuper = rid;
@@ -156,6 +157,10 @@ public class SimpleActionGenerator extends ActionGenerator {
 			if (rgid.gid != game.gid)
 				continue;
 			game.relocators[rgid.rid].setNext(RelocatorStatus.PASSENGER, nextLoc);			
+		}
+		
+		if (r.location == nextLoc) {
+			System.out.println("BUG FROM ENROUTE 2!");
 		}
 		
 		// generate a drive
@@ -243,6 +248,11 @@ public class SimpleActionGenerator extends ActionGenerator {
 			r.pickuper = -1; // reset pickuper
 			
 			// generate a drive
+			
+			if (r.location == nextLoc) {
+				System.out.println("BUG FROM PASSENGER!");
+			}
+			
 			Drive drive = new Drive(rid, r.cid, toDeposit, new RGid[0], 
 					game.graph.getNodeName(nextLoc));
 			return drive;
