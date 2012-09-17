@@ -71,7 +71,12 @@ public class SimpleActionGenerator extends ActionGenerator {
 	}
 	
 	private Drive genEnrouteDrive(int rid) {	
-		Relocator r = game.relocators[rid];			
+		Relocator r = game.relocators[rid];
+		
+		if(r.cid < 0) {
+			// Relocator does not have a car so we arn't going anywhere.
+			return null;
+		}
 		
 		// when we arrive at an destination: deposit car, pick up or drop off passengers
 		if (r.location == r.firstRoute().dst) {
