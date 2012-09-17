@@ -228,6 +228,10 @@ public class SimpleActionGenerator extends ActionGenerator {
 		else if (r.location != game.relocators[r.pickuper].location){			
 			r.setNext(RelocatorStatus.WAITING, r.location);
 		}
+		else {
+			r.setNext(RelocatorStatus.PASSENGER, game.relocators[r.pickuper].nextLoc);
+			// PROBLEMATIC, the next location may not be set yet
+		}
 		return null;
 	}
 
@@ -260,6 +264,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 		else {		
 			// otherwise do nothing
 			// the driver will set the status for passengers
+			r.setNext(RelocatorStatus.PASSENGER, game.relocators[r.pickuper].nextLoc);
 			return null;
 		}
 	}
