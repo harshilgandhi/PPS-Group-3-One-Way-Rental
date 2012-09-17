@@ -5,15 +5,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import rental.sim.Drive;
 import rental.sim.Edge;
 import rental.sim.Offer;
+import rental.sim.Ride;
 
 public class Player extends rental.sim.Player {
+	
 	
 	private enum RelocatorStatus {
 		ENROUTE,
@@ -25,13 +29,18 @@ public class Player extends rental.sim.Player {
 	}
 	
 	private RelocatorStatus[] rStatuses;
-	private String[] rLocations;
+	private Map<Integer, String> rLocations;
 	
 	private Map<Integer, String> carLocations;
 	private Map<Integer, String> carDestinations;
 	
+	
+	
 	private List<String> nodes;
 	private Path[][] paths;
+	
+	//To Map relocator and the car he drives
+	private Map<Integer, Integer> relCar;
 	
 	private class Path implements Comparable<Path> {
 		private int dist = Integer.MAX_VALUE;
@@ -120,10 +129,23 @@ Munich -- Copenhagen
 		
 		Player p = new Player();
 		try {
-			String[] starts = p.place(1, carL, carD, edges, 0);
+			String[] starts = p.place(2, carL, carD, edges, 0);
 			System.out.println("Starting locations:");
+			
 			System.out.println(Arrays.toString(starts));
 			System.out.println();
+			
+			// Assign relocator initial positions and statuses, and assign the relocator to a car
+			p.rStatuses = new RelocatorStatus[starts.length];
+			p.rLocations = new HashMap<Integer, String>();
+			p.relCar = new HashMap<Integer,Integer>();
+			for(int i=0; i< starts.length; i++)
+			{
+				p.rLocations.put(i, starts[i]);
+				p.rStatuses[i] = RelocatorStatus.ENROUTE;
+//get car id
+//p.relCar.put(i, car);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -147,10 +169,12 @@ Munich -- Copenhagen
 			this.carDestinations.put(i, carDestinations[i]);
 		}
 		
+		// Map of neighbors keyed by node name.
 		Map<String, Set<String>> neighbors = new HashMap<String, Set<String>>();
 		Set<String> destNeighbor = null;
 		Set<String> sourceNeighbor = null;
 		
+		// Set of unique node names
 		Set<String> nodeSet = new HashSet<String>();
 		for(Edge edge: edges) {
 			nodeSet.add(edge.destination);
@@ -178,6 +202,10 @@ Munich -- Copenhagen
 		Path path = null;
 		Path neighborPath = null;
 		PriorityQueue<Path> queue;
+		
+		// For each node, find the shortest path from all other nodes
+		// We can also change this so we only find the paths for
+		// car destinations to decrease time.
 		for(int id = 0; id < nodes.size(); id++) {
 			
 			queue = new PriorityQueue<Path>();
@@ -197,6 +225,7 @@ Munich -- Copenhagen
 				}
 			}
 			
+			// Basic dijkstra
 			while((path = queue.poll()) != null) {
 				path.known = true;
 				
@@ -205,7 +234,7 @@ Munich -- Copenhagen
 					int neighborId = nodes.indexOf(neighbor);
 					neighborPath = paths[id][neighborId];
 					if(!neighborPath.known) {
-						int d = path.dist + 1;
+						int d = path.dist + 1;// all edges are worth 1
 						if( d < neighborPath.dist ) {
 							neighborPath.dist = d;
 							neighborPath.nextId = path.id;
@@ -238,6 +267,8 @@ Munich -- Copenhagen
 		List<Distance> distances = new ArrayList<Distance>(carLocations.length);
 		Distance distance;
 		int dist;
+		
+		// Find all the distances from S -> D
 		for(int i = 0; i < carLocations.length; i++) {
 			int sourceId = nodes.indexOf(carLocations[i]);
 			int destId = nodes.indexOf(carDestinations[i]);
@@ -248,8 +279,11 @@ Munich -- Copenhagen
 			distances.add(distance);
 		}
 		
+		// Sort them by distance
 		Collections.sort(distances);
 		String[] startingNodes = new String[relocators];
+		
+		// Pick the shortest locations.
 		for(int i = 0; i < relocators; i++) {
 			startingNodes[i] = carLocations[distances.get(i).carId];
 		}
@@ -278,22 +312,53 @@ Munich -- Copenhagen
 	@Override
 	public DriveRide action() throws Exception {
 		
+		List<Drive> driveList = new LinkedList<Drive>();
+		List<Ride> rideList = new LinkedList<Ride>();		
+		
+		
 //		ENROUTE,
+		
+		for (int i = 0 ; i < rStatuses.length ; i++)
+		{
+			if (rStatuses[i].equals(RelocatorStatus.ENROUTE))
+			{	
+				String location = rLocations.get(i);
+				for ( int j=0; j<carLocations.size(); j++)
+				{
+					//get car id
+				}
+				Drive drive = new Drive(i, 0/*car*/, false, null, null/*destination*/);
+				driveList.add(drive);
+			}
+		}
+		
 //		PICKUP,
+		
+		
+		
 //		DROPOFF
 		// Jiacheng
 		// Create drive object for next position
 		
+		
+		
 //		IDLING,
 		// H
 		// Find out whether we need drive object or not.
+		
+		
+		
 //		WAITING,
-		// Hangout 
+		// Hangout
+		
+		
+		
 //		PASSENGER,
 		// Inlcuded in Drive object
 		
-		return null;
-	}
-
-	
+		
+		
+		
+		return null; //new DriveRide(drive, ride);
+	}	
 }
