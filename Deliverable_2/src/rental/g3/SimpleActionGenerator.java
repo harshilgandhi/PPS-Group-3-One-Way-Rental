@@ -87,7 +87,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				if (r.location == game.cars[game.relocators[rgid.rid].firstRoute().cid].source) {
 					// passengers.remove(rgid);
 					toRemove.add(rgid);
-					game.relocators[rgid.rid].pickuper = -1; // reset pickuper
+
 				}
 			}
 			passengers.removeAll(toRemove);
@@ -125,12 +125,14 @@ public class SimpleActionGenerator extends ActionGenerator {
 				List<Pickup> picks = findPickups(rid);
 				int pickCount = Math.min(3- game.cars[r.cid].getPassengers().size(), picks.size());
 				for (int i = 0; i < pickCount; i++) {
-					r.pushRoute(new Route(r.cid, picks.get(i).dropLoc));
+					if (picks.get(i).dropLoc != r.firstRoute().dst)
+						r.pushRoute(new Route(r.cid, picks.get(i).dropLoc));
 					r.pushRoute(new Route(r.cid, picks.get(i).pickLoc));
 					game.relocators[picks.get(i).rid].pushRoute(
 							new Route(picks.get(i).cid, game.cars[picks.get(i).cid].destination));
-					game.relocators[picks.get(i).rid].pickuper = rid;				
-					game.cars[picks.get(i).cid].inuse = true;
+					game.relocators[picks.get(i).rid].pickuper = rid;
+					game.relocators[picks.get(i).rid].cid = picks.get(i).cid;
+					game.cars[picks.get(i).cid].inuse = true;					
 				}
 			}
 			else { // if the car is full, do not reroute, just follow the route 	
@@ -231,13 +233,14 @@ public class SimpleActionGenerator extends ActionGenerator {
 		// if arrive at dropped off node
 		// generate a drive
 		
-		int dropOffNode = game.cars[r.firstRoute().cid].getSource();
+		int dropOffNode = game.cars[r.firstRoute().cid].source;
 		if (r.location == dropOffNode) {
 			// update information
-			int nextLoc = game.graph.nextMove(r.getLocation(), r.firstRoute().dst);
+			int nextLoc = game.graph.nextMove(r.location, r.firstRoute().dst);
 			boolean toDeposit = depositOrNot(nextLoc, r.getRoutes());
 			r.setNext(RelocatorStatus.ENROUTE, nextLoc);
 			game.cars[r.cid].setNext(nextLoc, toDeposit);
+			r.pickuper = -1; // reset pickuper
 			
 			// generate a drive
 			Drive drive = new Drive(rid, r.cid, toDeposit, new RGid[0], 
