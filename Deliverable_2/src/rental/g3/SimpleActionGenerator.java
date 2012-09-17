@@ -125,6 +125,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 				List<Pickup> picks = findPickups(rid);
 				int pickCount = Math.min(3- game.cars[r.cid].getPassengers().size(), picks.size());
 				for (int i = 0; i < pickCount; i++) {
+					if (game.cars[picks.get(i).cid].inuse == true)
+						continue;
 					if (picks.get(i).dropLoc != r.firstRoute().dst)
 						r.pushRoute(new Route(r.cid, picks.get(i).dropLoc));
 					if (r.location != picks.get(i).pickLoc)
