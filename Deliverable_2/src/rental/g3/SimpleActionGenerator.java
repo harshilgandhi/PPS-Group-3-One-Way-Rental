@@ -130,6 +130,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 				List<Pickup> picks = findPickups(rid);
 				int pickCount = Math.min(3- game.cars[r.cid].getPassengers().size(), picks.size());
 				for (int i = 0; i < pickCount; i++) {
+					if (game.cars[picks.get(i).cid].inuse == true)
+						continue;
 					if (picks.get(i).dropLoc != r.firstRoute().dst)
 						r.pushRoute(new Route(r.cid, picks.get(i).dropLoc));
 					if (r.location != picks.get(i).pickLoc)
@@ -138,7 +140,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 							new Route(picks.get(i).cid, game.cars[picks.get(i).cid].destination));
 					game.relocators[picks.get(i).rid].pickuper = rid;
 					game.relocators[picks.get(i).rid].cid = picks.get(i).cid;
-					game.cars[picks.get(i).cid].inuse = true;					
+					game.cars[picks.get(i).cid].inuse = true;
+					game.cars[picks.get(i).cid].driver = picks.get(i).rid;
 				}
 			}
 			else { // if the car is full, do not reroute, just follow the route 	
@@ -163,11 +166,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				continue;
 			game.relocators[rgid.rid].setNext(RelocatorStatus.PASSENGER, nextLoc);			
 		}
-		
-		if (r.location == nextLoc) {
-			System.out.println("BUG FROM ENROUTE 2!");
-		}
-		
+			
 		// generate a drive
 		Drive drive = new Drive(rid, r.cid, toDeposit, game.cars[r.cid].passengers.toArray(new RGid[0]), 
 				game.graph.getNodeName(nextLoc));
