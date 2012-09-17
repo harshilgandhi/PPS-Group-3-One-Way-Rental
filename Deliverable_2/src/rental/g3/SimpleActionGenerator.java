@@ -78,16 +78,20 @@ public class SimpleActionGenerator extends ActionGenerator {
 			r.popRoute();
 			// check passengers to drop-off
 			List<RGid> passengers = game.cars[r.cid].passengers;
+			List<RGid> toRemove = new ArrayList<RGid>();
 			for (RGid rgid : passengers) {
 				// FOR MONDAY, SKIP OTHER GROUP
 				if (rgid.gid != game.gid)
 					continue;
 				// if arrive at one of the dropoff nodes
 				if (r.location == game.cars[game.relocators[rgid.rid].firstRoute().cid].source) {
-					passengers.remove(rgid);
+					// passengers.remove(rgid);
+					toRemove.add(rgid);
 					game.relocators[rgid.rid].pickuper = -1; // reset pickuper
 				}
 			}
+			passengers.removeAll(toRemove);
+			
 			// check passengers to pick up
 			for (int i = 0; i < game.nRelocator; i++) {
 				if (game.relocators[i].pickuper == rid && game.relocators[i].location == r.location) {
