@@ -47,7 +47,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				ride = genDropoffRide(i);
 				break;
 			default:
-				throw new RuntimeException("Unexpected relocator status.");
+				throw new RuntimeException("Unexpected relocator status:"  + i + ": " + game.relocators[i].status);
 			}
 			if (drive != null) 
 				drives.add(drive);
