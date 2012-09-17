@@ -214,8 +214,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 		if (r.pickuper < 0) { // there is no scheduled pick up, do nothing
 			r.setNext(RelocatorStatus.WAITING, r.location);
 		}
-		else {
-			// do nothing, the driver will set up
+		else if (r.location != game.relocators[r.pickuper].location){			
+			r.setNext(RelocatorStatus.WAITING, r.location);
 		}
 		return null;
 	}

@@ -15,6 +15,11 @@ public class Player extends rental.sim.Player {
 	// We can keep all the information about the game into this structure
 	private Game game;	
  	
+	public String name()
+	{
+		return "Group 3";
+	}
+	
 	public static void main(String[] args) {
 		/* Testing with dot:
 graph {
