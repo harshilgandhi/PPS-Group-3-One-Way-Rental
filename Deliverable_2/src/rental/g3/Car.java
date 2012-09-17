@@ -17,7 +17,6 @@ class Car {
 	
 	// flag for next movement
 	int nextLoc = -1;
-	boolean toDeposit = false;
 	
 	public Car(int id, int src, int dst) {
 		this.cid = id;
@@ -29,9 +28,7 @@ class Car {
 	public void move() {
 		if (nextLoc >= 0) {
 			location = nextLoc;
-			isDeposit = toDeposit;
 			nextLoc = -1;
-			toDeposit = false;
 		}
 	}
 	
@@ -60,11 +57,16 @@ class Car {
 		return isDeposit;
 	}
 	public void setDeposit(boolean isDeposit) {
+		if(this.isDeposit) {
+			// Don't ever regress deposit state.
+			return;
+		}
+		
 		this.isDeposit = isDeposit;
 	}	
 	public void setNext(int nextLoc, boolean toDeposit) {
 		this.nextLoc = nextLoc;
-		this.toDeposit = toDeposit;
+		setDeposit(toDeposit);
 	}
 
 	public boolean isInuse() {
