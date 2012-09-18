@@ -122,9 +122,9 @@ Munich -- Copenhagen
 
 			for (int i = 0; i < game.nCar; i++) {
 				relocators[i] = new Relocator(i, Relocator.RelocatorStatus.ENROUTE, game.graph.getNodeId(carLocations[i]));
-				relocators[i].pushRoute(new Route(i, game.cars[i].getDestination()));
-				startingNodes[i] = carLocations[i];
-				game.cars[i].setInuse(true);
+				relocators[i].assignCar(game.cars[i]);
+				game.cars[i].assignDriver(relocators[i]);
+				startingNodes[i] = carLocations[i];				
 			}								
 			for (int i = game.nCar; i < nrel; i++) {
 				relocators[i] = new Relocator(i, Relocator.RelocatorStatus.WAITING, 0);
@@ -155,10 +155,9 @@ Munich -- Copenhagen
 				int dst = game.cars[carId].destination;
 				startingNodes[i] = carLocations[carId];
 				relocators[i] = new Relocator(i, Relocator.RelocatorStatus.ENROUTE, game.graph.getNodeId(startingNodes[i]));
-				relocators[i].pushRoute(new Route(carId, dst));
-				relocators[i].cid = carId;
-				game.cars[carId].inuse = true;
-				game.cars[carId].driver = i;				
+				relocators[i].assignCar(game.cars[carId]);
+				game.cars[carId].assignDriver(relocators[i]);
+				assert(relocators[i].location == game.cars[carId].location);
 			}
 		}
 		
@@ -187,19 +186,30 @@ Munich -- Copenhagen
 
 	@Override
 	public DriveRide action() throws Exception {				
-		ActionGenerator actGen = new SimpleActionGenerator(game);
+		
+		// before each turn starts, reset scheduling information
+		resetAction();
+		
+		ActionGenerator actGen = new SimpleActionGenerator(game);		
 		DriveRide dr = actGen.genDriveRide();		
 		// update drive results after each run
 		updateDrive();
 		return dr;
 	}
+	
+	private void resetAction() {
+		for (int i = 0; i < game.nRelocator; i++)
+			game.relocators[i].reset();
+		for (int i = 0; i < game.nCar; i++)
+			game.cars[i].reset();
+	}
 
 	// update drives after each turn of action
 	private void updateDrive() {
-		for (Car car : game.cars)
-			car.move();	
-		for (Relocator r : game.relocators)
-			r.move();		
+//		for (Car car : game.cars)
+//			car.move();	
+//		for (Relocator r : game.relocators)
+//			r.move();		
 	}
 	
 	// update rides before each turn of offer

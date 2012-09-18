@@ -7,16 +7,14 @@ import rental.sim.RGid;
 
 class Car {
 	int cid;
-	int location;
 	int source;
 	int destination;
-	int driver = -1;
-	boolean inuse = false; 
-	boolean isDeposit = false;
-	List<RGid> passengers = new ArrayList<RGid>();
 	
-	// flag for next movement
-	int nextLoc = -1;
+	int location;
+	Relocator driver = null;
+	boolean isDeposit = false;
+	List<RGid> passengers = new ArrayList<RGid>();	
+	private boolean scheduled;
 	
 	public Car(int id, int src, int dst) {
 		this.cid = id;
@@ -25,17 +23,10 @@ class Car {
 		this.location = this.source;
 	}
 	
-	public void move() {
-		if (nextLoc >= 0) {
-			location = nextLoc;
-			nextLoc = -1;
-		}
-	}
-	
-	public int getDriver() {
+	public Relocator getDriver() {
 		return driver;
 	}
-	public void setDriver(int driver) {
+	public void setDriver(Relocator driver) {
 		this.driver = driver;
 	}
 	public int getDestination() {
@@ -56,25 +47,25 @@ class Car {
 	public boolean isDeposit() {
 		return isDeposit;
 	}
-	public void setDeposit(boolean isDeposit) {
-		if(this.isDeposit) {
-			// Don't ever regress deposit state.
-			return;
-		}
-		
-		this.isDeposit = isDeposit;
-	}	
-	public void setNext(int nextLoc, boolean toDeposit) {
-		this.nextLoc = nextLoc;
-		setDeposit(toDeposit);
+	
+	public void assignDriver(Relocator driver) {
+		this.driver = driver;	
+	}
+	
+	public void deposit() {
+		this.isDeposit = true;
+		driver.car = null; // the driver no longer own the car
+		driver.popRoute();
+		driver = null;		
+	}
+	
+	public void move(int nextLoc) {
+		this.location = nextLoc;
+		setScheduled(true);
 	}
 
 	public boolean isInuse() {
-		return inuse;
-	}
-
-	public void setInuse(boolean inuse) {
-		this.inuse = inuse;
+		return this.driver != null;
 	}
 
 	public List<RGid> getPassengers() {
@@ -84,5 +75,23 @@ class Car {
 	public void setPassengers(List<RGid> passengers) {
 		this.passengers = passengers;
 	}
+	
+	// if the car is deposited, always displayed as scheduled
+	public void reset() {
+		if (isDeposit) {
+			scheduled = true;
+			return;
+		}
+		scheduled = false;			
+	}
+
+	public boolean isScheduled() {
+		return scheduled;
+	}
+
+	public void setScheduled(boolean scheduled) {
+		this.scheduled = scheduled;
+	}
+	
 }
 	

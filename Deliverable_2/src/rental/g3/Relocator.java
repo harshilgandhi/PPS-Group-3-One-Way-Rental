@@ -4,10 +4,7 @@ import java.util.List;
 import java.util.Stack;
 
 class Relocator {
-	public enum RelocatorStatus {
-		
-		DRIVING,
-		
+	public enum RelocatorStatus {		
 		ENROUTE, // the driver heading to his destination with no passenger
 		IDLING, // the driver who has a car available at the destination
 		WAITING, // a relocator who is waiting for a pick up		
@@ -20,8 +17,9 @@ class Relocator {
 	int rid;
 	int location;
 	RelocatorStatus status;
-	int cid = -1;
-	int pickuper = -1;
+	Car car = null;
+	Relocator pickuper = null;	
+	private boolean scheduled;
 	
 	
 	// Aux Structure:	
@@ -29,17 +27,7 @@ class Relocator {
 	//private Route route;			
 	Stack<Route> routes = new Stack<Route>();
 	// for pickup relocator
-	//private List<Pickup> pickups;
-	
-	int nextLoc = -1;
-	RelocatorStatus nextStatus = RelocatorStatus.INVALID;
-	
-	public void move() {
-		location = nextLoc;
-		status = nextStatus;
-		nextStatus = RelocatorStatus.INVALID;
-		nextLoc = -1;
-	}
+	//private List<Pickup> pickups;	
 	
 	public Relocator(int id, RelocatorStatus s, int loc) {
 		rid = id;
@@ -47,12 +35,6 @@ class Relocator {
 		location = loc;
 	}
 	
-//	public List<Pickup> getPickups() {
-//		return pickups;
-//	}
-//	public void setPickups(List<Pickup> pickups) {
-//		this.pickups = pickups;
-//	}
 	public RelocatorStatus getStatus() {
 		return status;
 	}
@@ -68,9 +50,11 @@ class Relocator {
 	public Stack<Route> getRoutes() {
 		return routes;
 	}
-	public void setNext(RelocatorStatus nextStatus, int nextLoc) {
-		this.nextStatus = nextStatus;
-		this.nextLoc = nextLoc;
+	
+	public void move(RelocatorStatus nextStatus, int nextLoc) {
+		this.status = nextStatus;
+		this.location = nextLoc;
+		this.scheduled = true;
 	}
 	
 	public void pushRoute(Route r) {
@@ -81,5 +65,26 @@ class Relocator {
 	}
 	public Route firstRoute() {
 		return routes.peek();
+	}
+
+	public boolean isScheduled() {
+		return scheduled;
+	}
+	
+	public void reset() {
+		this.scheduled = false;
+	}
+	
+	public void assignCar(Car car) {
+		this.car = car;
+		pushRoute(new Route(car.cid, car.destination));
+	}
+	
+	public boolean hasCar() {
+		return car != null;
+	}
+	
+	public boolean isDriving() {
+		return car != null && car.location == location;
 	}
 }

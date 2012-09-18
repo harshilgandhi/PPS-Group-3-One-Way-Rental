@@ -49,7 +49,8 @@ class Game {
 	public List<Car> getEmptyCars(int loc) {
 		List<Car> emptyCars = new ArrayList<Car>();
 		for (Car car : cars) {
-			if (car.isDeposit()==false && car.getLocation()==loc && !car.isInuse()) {
+			if (car.isDeposit()==false && car.isScheduled()==false 
+				&& car.getLocation()==loc && car.isInuse() == false) {
 				emptyCars.add(car);
 			}
 		}
