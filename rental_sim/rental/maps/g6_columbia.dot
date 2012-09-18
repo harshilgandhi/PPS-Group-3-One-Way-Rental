@@ -1,0 +1,29 @@
+graph {
+Uris -- Schapiro
+Schapiro -- Pupin
+Pupin -- Mudd
+Mudd -- Uris
+Mudd -- Butler
+Avery -- Earl
+Earl -- Philosophy
+Philosophy -- Kent
+Kent -- Avery
+Kent -- Butler
+Mathematics -- Avery
+Hamilton -- John_Jay
+Hamilton -- Mathematics
+John_Jay -- Mathematics
+Lerner_Hall -- Hamilton 
+John_Jay -- Lerner_Hall
+Lerner_Hall -- Mathematics
+Lerner_Hall -- Butler
+Butler -- Wallach
+Wallach -- Northwest_Corner
+Northwest_Corner -- Chandler
+Chandler -- Butler
+Chandler -- Havemeyer
+Havemeyer -- Warren
+Warren -- Carman
+Carman -- Hartley
+Hartley -- Warren
+}

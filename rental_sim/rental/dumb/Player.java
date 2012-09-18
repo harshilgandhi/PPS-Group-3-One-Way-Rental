@@ -46,7 +46,8 @@ public class Player extends rental.sim.Player {
 	                      String[] carLocations,    // locations of your cars
 	                      String[] carDestinations, // destinations of your cars
 	                      Edge[] edges,             // the edges of the map
-	                      int groups)               // total number of groups
+	                      int groups,               // total number of groups
+	                      int scoreTurn)            // turn to measure score
 	{
 		this.edges = edges;
 		this.cars = carLocations;
@@ -127,7 +128,7 @@ public class Player extends rental.sim.Player {
 		HashSet <RGid> used = new HashSet <RGid> ();
 		// generate X rides and stop if a deadend
 		int tries = 100;
-		for (int r = 0 ; r != rideAttempts ; ++r) {
+		if (groups != 1) for (int r = 0 ; r != rideAttempts ; ++r) {
 			if (--tries == 0) break;
 			// get a random other group
 			int otherGroup = gen.nextInt(groups);

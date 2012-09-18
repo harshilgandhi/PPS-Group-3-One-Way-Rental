@@ -72,7 +72,7 @@ Munich -- Copenhagen
 		
 		Player p = new Player();
 		try {
-			String[] starts = p.place(1, carL, carD, edges, 0);
+			String[] starts = p.place(1, carL, carD, edges, 0, 1000);
 			System.out.println("Starting locations:");
 			System.out.println(Arrays.toString(starts));
 			System.out.println();
@@ -87,7 +87,7 @@ Munich -- Copenhagen
 	}
 	
 	private Game initializeGame(int nrel, String[] carLocations,
-			String[] carDestinations, Edge[] edges) {
+			String[] carDestinations, Edge[] edges, int totalTurns) {
 		// initialize the graph			
 		Graph g = new Graph(edges);
 		
@@ -98,16 +98,16 @@ Munich -- Copenhagen
 			cars[i] = new Car(i, g.getNodeId(carLocations[i]), g.getNodeId(carDestinations[i]));
 		
 		// create a new game
-		Game game = new Game(this.id, g, ncar, cars, nrel, 10);
+		Game game = new Game(this.id, g, ncar, cars, nrel, totalTurns);
 		return game;
 	}
 	
 	@Override
 	public String[] place(int nrel, String[] carLocations,
-			String[] carDestinations, Edge[] edges, int groups)
+			String[] carDestinations, Edge[] edges, int groups, int totalTurns)
 			throws Exception {
 		// initialize the game
-		game = initializeGame(nrel, carLocations, carDestinations, edges);
+		game = initializeGame(nrel, carLocations, carDestinations, edges, totalTurns);
 		
 		
 		// place relocators

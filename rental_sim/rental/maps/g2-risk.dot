@@ -1,0 +1,84 @@
+graph {
+Alaska -- "Northwest Territory"
+Alaska -- Alberta
+Alaska -- Kamchatka
+"Northwest Territory" -- Alberta
+"Northwest Territory" -- Greenland
+"Northwest Territory" -- Ontario
+Alberta -- Ontario
+Alberta -- "Western United States"
+Ontario -- Greenland
+Ontario -- Quebec
+Ontario -- "Western United States"
+Ontario -- "Eastern United States"
+Quebec -- Greenland
+Quebec -- "Eastern United States"
+"Eastern United States" -- "Western United States"
+"Eastern United States" -- "Central America"
+"Western United States" -- "Central America"
+"Central America" -- "Venezuela"
+"Greenland" -- "Iceland"
+"Venezuela" -- "Brazil"
+Venezuela -- Peru
+Peru -- Brazil
+Peru -- Argentina
+Brazil -- Argentina
+Brazil -- "North Africa"
+"North Africa" -- Congo
+"North Africa" -- "East Africa"
+"North Africa" -- Egypt
+"North Africa" -- "Western Europe"
+Egypt -- "East Africa"
+Egypt -- "Middle East"
+Egypt -- "Southern Europe"
+"East Africa" -- "Middle East"
+"East Africa" -- Congo
+"East Africa" -- Madagascar
+"East Africa" -- "South Africa"
+Congo -- "South Africa"
+"South Africa" -- Madagascar
+Iceland -- "Great Britain"
+Iceland -- Scandinavia
+"Great Britain" -- Scandinavia
+"Great Britain" -- "Western Europe"
+"Great Britain" -- "Northern Europe"
+Scandinavia -- Ukraine
+Scandinavia -- "Northern Europe"
+"Northern Europe" -- Ukraine
+"Northern Europe" -- "Southern Europe"
+"Northern Europe" -- "Western Europe"
+"Western Europe" -- "Southern Europe"
+"Southern Europe" -- Ukraine
+"Southern Europe" -- "Middle East"
+Ukraine -- Ural
+Ukraine -- Afghanistan
+Ukraine -- "Middle East"
+"Middle East" -- Afghanistan
+"Middle East" -- India
+Afghanistan -- India
+Afghanistan -- Ural
+Afghanistan -- China
+India -- China
+India -- Siam
+China -- Siam
+China -- Ural
+China -- Siberia
+China -- Mongolia
+Ural -- Siberia
+Siberia -- Yakutsk
+Siberia -- Irkutsk
+Siberia -- Mongolia
+Yakutsk -- Kamchatka
+Yakutsk -- Irkutsk
+Kamchatka -- Japan
+Kamchatka -- Irkutsk
+Kamchatka -- Mongolia
+Irkutsk -- Mongolia
+Mongolia -- Japan
+Siam -- Indonesia
+Indonesia -- "New Guinea"
+Indonesia -- "Western Australia"
+"New Guinea" -- "Western Australia"
+"New Guinea" -- "Eastern Australia"
+"Western Australia" -- "Eastern Australia"
+}

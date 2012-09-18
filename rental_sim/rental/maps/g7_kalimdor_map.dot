@@ -1,0 +1,25 @@
+graph {
+Nighthaven -- Auberdine
+Nighthaven -- Everlook
+Everlook -- Talonbranch_Glade
+Talonbranch_Glade -- Bloodvenom_Post
+Auberdine -- Zoramgar_Outpost
+Zoramgar_Outpost -- Astranaar
+Splintertree_Post -- Astranaar
+Splintertree_Post -- Talrendis_Point
+Talrendis_Point -- Valormok
+Bloodvenom_Post -- Astranaar
+Bloodvenom_Post -- Splintertree_Post
+Splintertree_Post -- Crossroads
+Crossroads -- Orgrimmar
+Crossroads -- Ratchet
+Crossroads -- Camp_Taurajo
+Thurderbluff -- Camp_Taurajo
+Brackenwall_Village -- Camp_Taurajo
+Theramore_Isle -- Brackenwall_Village
+Stonetalon_Peak --  Sunrock_Retreat
+Shadowprey_Village -- Nijels_point
+Shadowprey_Village -- Thurderbluff
+Sunrock_Retreat -- Thurderbluff
+}
+

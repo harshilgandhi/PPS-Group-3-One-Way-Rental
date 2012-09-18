@@ -23,18 +23,19 @@ public abstract class Player {
 	// set relocator initial positions
 	// save information arrays in variables
 	// to re-use them throughout the game
-	public abstract String[] place(int relocators,     // relocators of your company
+	public abstract String[] place(int relocators, // relocators of your company
 	                               String[] carLocations,
 	                               String[] carDestinations,
-	                               Edge[] edges,       // edges of the map
-	                               int groups)         // total number of groups
+	                               Edge[] edges,   // edges of the map
+	                               int groups,     // total number of groups
+	                               int scoreTurn)  // turn to measure score
 	                               throws Exception;
 
 	// publish offers
 	public abstract Offer[] offer() throws Exception;
 
 	// add replies to offers
-	// all offers are givevn
+	// all offers are given
 	// do NOT reply to your own offers
 	public abstract void request(Offer[] offers) throws Exception;
 

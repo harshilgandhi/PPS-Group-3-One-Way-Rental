@@ -1,0 +1,31 @@
+graph{
+city21 -- city9
+city25 -- city20
+city23 -- city22
+city17 -- city1
+city19 -- city7
+city26 -- city0
+city17 -- city12
+city5 -- city3
+city11 -- city5
+city17 -- city5
+city28 -- city6
+city23 -- city1
+city20 -- city11
+city28 -- city24
+city15 -- city5
+city5 -- city4
+city27 -- city15
+city23 -- city18
+city29 -- city5
+city28 -- city9
+city23 -- city19
+city14 -- city0
+city15 -- city10
+city9 -- city4
+city26 -- city18
+city11 -- city8
+city24 -- city13
+city15 -- city2
+city16 -- city12
+}

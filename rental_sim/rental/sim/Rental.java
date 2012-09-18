@@ -36,7 +36,7 @@ public class Rental {
 			// get file of players
 			BufferedReader in = new BufferedReader(new FileReader(new File(txtPath)));
 			// get tools
-			ClassLoader loader = ClassLoader.getSystemClassLoader();
+			ClassLoader loader = ToolProvider.getSystemToolClassLoader();
 			JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 			StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 			// load players
@@ -162,12 +162,15 @@ public class Rental {
 		return nodes.toArray(new String[0]);
 	}
 
+	// limit turns (useful in case of infinite loops)
+	private static final int turnLimit = 0;
+
 	// main function
 	// 1st argument is list of players
 	// 2nd argument is map file (dot format)
 	// 3rd argument is number of cars per group
 	// 4th argument is number of relocators per group
-	// 5th argument is total number of turns for the game
+	// 5th argument is the specified turn at which score is counted
 	public static void main(String[] args) throws Exception
 	{
 		// load players
@@ -177,23 +180,23 @@ public class Rental {
 		if (players == null)
 			System.exit(1);
 		// load map
-		String mapFile = "rental/triangle.dot";
+		String mapFile = "rental/maps/europe.dot";
 		if (args.length > 1) mapFile = args[1];
 		Edge[] edges = loadMap(mapFile);
 		// get nodes of map
 		String[] nodes = edgesToNodes(edges);
 		// number of cars
-		int cars = 3;
+		int cars = 50;
 		if (args.length > 2)
 			cars = Integer.parseInt(args[2]);
 		// number of relocators
-		int relocators = 2;
+		int relocators = 20;
 		if (args.length > 3)
 			relocators = Integer.parseInt(args[3]);
-		// number of turns
-		int turns = 4;
+		// turn that score is counted
+		int scoreTurn = 10;
 		if (args.length > 4)
-			turns = Integer.parseInt(args[4]);
+			scoreTurn = Integer.parseInt(args[4]);
 		// print game info
 		System.err.println("\n #### Info ####\n");
 		System.err.println("Nodes: " + nodes.length);
@@ -201,19 +204,29 @@ public class Rental {
 		System.err.println("Groups: " + players.length);
 		System.err.println("Cars / group: " + cars);
 		System.err.println("Relocators / group: " + relocators);
-		System.err.println("Turns: " + turns);
+		System.err.println("Score turn: " + scoreTurn);
 		// play the game
-		int[] score = play(players, edges, cars, relocators, turns);	
+		int[][] score = play(players, edges, cars, relocators, scoreTurn);	
+		int[] turnScore = score[0];
+		int[] finalScore = score[1];
 		// print game results
-		System.err.println("\n### Scores ###");
+		if (turnScore != null) {
+			System.err.println("\n### Turn Score (# of Deposited Cars at Turn " + scoreTurn + ") ###");
+			for (int g = 0 ; g != players.length ; ++g)
+				System.err.println(" Group " + players[g].name() + " (" + g + "): " + turnScore[g]);
+		}
+		System.err.println("\n### Final Score (# of Turns to Deposit All Cars) ###");
 		for (int g = 0 ; g != players.length ; ++g)
-			System.err.println(" Group " + players[g].name() + " (" + g + "): " + score[g]);
+			if (finalScore[g] == 0)
+				System.err.println(" Group " + players[g].name() + " (" + g + "): N/A");
+			else
+				System.err.println(" Group " + players[g].name() + " (" + g + "): " + finalScore[g]);
 	}
 
 	// play the game and return the score
-	private static int[] play(Player groups[], Edge[] edgesArr,
-	                          int carsPerGroup, int relsPerGroup,
-	                          int turns) throws Exception
+	private static int[][] play(Player[] groups, Edge[] edgesArr,
+	                            int carsPerGroup, int relsPerGroup,
+	                            int scoreTurn) throws Exception
 	{
 		// keep cars and relocators by id
 		String[][] carDestination = new String[groups.length][carsPerGroup];
@@ -227,9 +240,14 @@ public class Rental {
 			edges.add(e.reverse());
 		}
 		edgesArr = edges.toArray(new Edge[0]);
+		// count total deposited
+		int toDeposit = carsPerGroup * groups.length;
+		int[] toDepositPerGroup = new int [groups.length];
+		Arrays.fill(toDepositPerGroup, carsPerGroup);
 		// set zero scores
-		int[] score = new int [groups.length];
-		Arrays.fill(score, 0);
+		int[] turnScore = null;
+		int[] finalScore = new int [groups.length];
+		Arrays.fill(finalScore, 0);
 		// set random car locations
 		String[] nodes = edgesToNodes(edgesArr);
 		Random gen = new Random();
@@ -256,7 +274,8 @@ public class Rental {
 			Edge[] edgesCopy = new Edge[edgesArr.length];
 			for (int i = 0 ; i != edgesArr.length ; ++i)
 				edgesCopy[i] = new Edge(edgesArr[i].source, edgesArr[i].destination);
-			String[] relLocations = groups[g].place(relsPerGroup, carLocCopy, carDestCopy, edgesCopy, groups.length);
+			String[] relLocations = groups[g].place(relsPerGroup, carLocCopy, carDestCopy,
+			                                        edgesCopy, groups.length, scoreTurn);
 			// check number of placements
 			if (relLocations.length != relsPerGroup)
 				throw new Exception("Invalid number of locations");
@@ -264,41 +283,46 @@ public class Rental {
 			for (int r = 0 ; r != relsPerGroup ; ++r)
 				relocatorLocation[g][r] = relLocations[r];
 		}
-		for (int turn = 1 ; turn <= turns ; ++turn) {
+		for (int turn = 1 ; toDeposit != 0 && turn != turnLimit ; ++turn) {
 			// print verbose info helpful for knowing what's going on
 			System.err.println("\n########## Turn " + turn + " ##########\n");
-			for (int g = 0 ; g != groups.length ; ++g) {
-					System.err.println("### Group " + groups[g].name() + " (" + g + ") ###");
-				System.err.println("  Cars:");			
-				for (int c = 0 ; c != carsPerGroup ; ++c)
-					System.err.println("    (" + c + ") " + carLocation[g][c] + " [-> " + carDestination[g][c] + "]");
+			for (int group = 0 ; group != groups.length ; ++group) {
+				if (toDepositPerGroup[group] == 0) continue;
+				System.err.println("### Group " + groups[group].name() + " (" + group + ") ###");
+				System.err.println("  Cars:");
+				for (int car = 0 ; car != carsPerGroup ; ++car)
+					if (carLocation[group][car] != null)
+						System.err.println("    (" + car + ") " + carLocation[group][car] + " [-> " + carDestination[group][car] + "]");
 				System.err.println("  Relocators:");
-				for (int r = 0 ; r != relsPerGroup ; ++r)
-					System.err.println("    (" + r + ") " + relocatorLocation[g][r]);
+				for (int rel = 0 ; rel != relsPerGroup ; ++rel)
+					System.err.println("    (" + rel + ") " + relocatorLocation[group][rel]);
 				System.err.println("");
 			}
 			// get offers and accumulate in a single array
 			int totalOffers = 0;
 			List <Offer> offerList = new LinkedList <Offer> ();
-			for (int g = 0 ; g != groups.length ; ++g) {
-				Offer[] curOffers = groups[g].offer();
-				for (int i = 0 ; i != curOffers.length ; ++i)
-					offerList.add(curOffers[i]);
-			}
+			for (int group = 0 ; group != groups.length ; ++group)
+				if (toDepositPerGroup[group] != 0) {
+					Offer[] curOffers = groups[group].offer();
+					for (int i = 0 ; i != curOffers.length ; ++i)
+						offerList.add(curOffers[i]);
+				}
 			Offer[] offers = offerList.toArray(new Offer[0]);
 			// ask for replies in the offers
 			for (Offer o : offers)
 				o.requestsAllowed = true;
-			for (int g = 0 ; g != groups.length ; ++g)
-				groups[g].request(offers);
+			for (int group = 0 ; group != groups.length ; ++group)
+				if (toDepositPerGroup[group] != 0)
+					groups[group].request(offers);
 			// ask for players to verify replies
 			for (Offer o : offers) {
 				o.requestsAllowed = false;
 				o.seeRequestsAllowed = true;
 				o.verifyAllowed = true;
 			}
-			for (int g = 0 ; g != groups.length ; ++g)
-				groups[g].verify();
+			for (int group = 0 ; group != groups.length ; ++group)
+				if (toDepositPerGroup[group] != 0)
+					groups[group].verify();
 			// reply no to non replied cases
 			for (Offer o : offers)
 				o.denyNonReplied();
@@ -310,6 +334,7 @@ public class Rental {
 			Drive[][] allDrives = new Drive[groups.length][];
 			List <Ride> allRides = new LinkedList <Ride> ();
 			for (int group = 0 ; group != groups.length ; ++group) {
+				if (toDepositPerGroup[group] == 0) continue;
 				Player.DriveRide pair = groups[group].action();
 				Drive[] drives = pair.drive;
 				Ride[] rides = pair.ride;
@@ -374,10 +399,13 @@ public class Rental {
 			}
 			// count and move
 			HashSet <RGid> rideDone = new HashSet <RGid> ();
-			for (int group = 0 ; group != groups.length ; ++group)
+			for (int group = 0 ; group != groups.length ; ++group) {
+				if (toDepositPerGroup[group] == 0) continue;
 				for (Drive drive : allDrives[group]) {
 					// move car and driver
-					System.err.println("Car: " + drive.car + " (" + group + "): " + carLocation[group][drive.car] + " -> " + drive.destination);
+					System.err.print("Car: " + drive.car + " (" + group + "): " + carLocation[group][drive.car] + " -> " + drive.destination);
+					if (drive.deposit) System.err.println(" {d}");
+					else System.err.println("");
 					carLocation[group][drive.car] = drive.destination;
 					relocatorLocation[group][drive.driver] = drive.destination;
 					RGid drgid = new RGid(drive.driver, group);
@@ -386,7 +414,9 @@ public class Rental {
 					if (carDestination[group][drive.car].equals(drive.destination) && drive.deposit) {
 						System.err.println(" deposit!");
 						carLocation[group][drive.car] = null;
-						score[group]++;
+						toDeposit--;
+						if (--toDepositPerGroup[group] == 0)
+							finalScore[group] = turn;
 					} else System.err.println("");
 					// move own passengers
 					for (RGid rgid : drive.passengers) {
@@ -413,10 +443,17 @@ public class Rental {
 							}
 					}
 				}
+			}
 			// open rides for reading
 			for (Ride ride : allRides)
 				ride.waiting = false;
+			// copy turn score
+			if (turn == scoreTurn) {
+				turnScore = new int [groups.length];
+				for (int group = 0 ; group != groups.length ; ++group)
+					turnScore[group] = carsPerGroup - toDepositPerGroup[group];
+			}
 		}
-		return score;
+		return new int [][] {turnScore, finalScore};
 	}
 }

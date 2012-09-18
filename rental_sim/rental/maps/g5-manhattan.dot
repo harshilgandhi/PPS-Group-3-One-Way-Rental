@@ -1,0 +1,44 @@
+graph {
+Harlem -- MorningsideHeights
+Harlem -- EastHarlem
+Harlem -- CentralPark
+CentralPark -- EastHarlem
+EastHarlem -- UpperEastSide
+MorningsideHeights -- UpperWestSide
+CentralPark -- UpperWestSide
+MidtownWest -- UpperWestSide
+CentralPark -- UpperEastSide
+CentralPark -- MidtownWest
+UpperEastSide-- MidtownEast
+MidtownWest -- MidtownEast
+MidtownWest -- TimesSquare
+TimesSquare -- GarmentDistrict
+MidtownWest -- GarmentDistrict
+MidtownWest -- MurrayHill
+MidtownWest -- Chelsea
+MidtownEast -- MurrayHill
+MurrayHill -- GarmentDistrict
+Chelsea -- GarmentDistrict
+MurrayHill -- Gramercy
+GarmentDistrict -- Gramercy
+Chelsea -- Gramercy
+MurrayHill -- StuyvesantTown
+Gramercy -- StuyvesantTown
+GreenwichVillage -- Chelsea
+GreenwichVillage -- Gramercy
+EastVillage -- Gramercy
+EastVillage -- StuyvesantTown
+GreenwichVillage -- EastVillage
+GreenwichVillage -- Soho
+EastVillage -- LittleItaly
+EastVillage -- LowerEastSide
+Soho -- LittleItaly
+LittleItaly -- LowerEastSide
+Soho -- Tribeca
+Soho -- Chinatown
+LowerEastSide -- Chinatown
+Tribeca -- Chinatown
+Tribeca -- FinancialDistrict
+Chinatown -- FinancialDistrict
+FinancialDistrict -- BrooklynHeights
+}

@@ -1,0 +1,30 @@
+graph {
+Belgrano -- Halley
+Halley -- Neumayer
+Belgrano -- Neumayer
+Halley -- Sanae
+Belgrano -- Sanae
+Neumayer -- Maitri
+Sanae -- Maitri
+Neumayer -- Sanae
+Maitri -- Novolazarevskaya
+Neumayer -- Novolazarevskaya
+Sanae -- Novolazarevskaya
+Novolazarevskaya -- Syowa
+Syowa -- Molodezhnaya
+Syowa -- Mawson
+Molodezhnaya -- Mawson
+Mawson -- Zhong
+Mawson -- Progress
+Mawson -- Davis
+Zhong -- Progress
+Zhong -- Davis
+Progress -- Davis
+Zhong -- Vostok
+Progress -- Vostok
+Davis -- Vostok
+Vostok -- Mirnyy
+Mirnyy -- Davis
+Mirnyy -- Progress
+Mirnyy -- Zhong
+}
