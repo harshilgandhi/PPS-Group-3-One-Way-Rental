@@ -10,6 +10,21 @@ class Route {
 	}
 }
 
+class PickupDistance implements Comparable<PickupDistance> {
+	int pid;
+	int distance;
+	
+	public PickupDistance(int id, int dist) {		
+		this.pid = id;
+		this.distance = dist;
+	}
+
+	@Override
+	public int compareTo(PickupDistance pd) {
+		return (distance < pd.distance) ? -1 :
+			   (distance > pd.distance) ?  1 : 0;
+	}
+}
 
 
 class Pickup {

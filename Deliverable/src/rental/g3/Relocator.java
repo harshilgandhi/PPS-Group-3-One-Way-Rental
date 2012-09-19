@@ -28,6 +28,7 @@ class Relocator {
 	Stack<Route> routes = new Stack<Route>();
 	// for pickup relocator
 	//private List<Pickup> pickups;	
+	private int baseDestination;
 	
 	public Relocator(int id, RelocatorStatus s, int loc) {
 		rid = id;
@@ -78,6 +79,7 @@ class Relocator {
 	public void assignCar(Car car) {
 		this.car = car;
 		pushRoute(new Route(car.cid, car.destination));
+		this.baseDestination = car.destination;
 	}
 	
 	public boolean hasCar() {

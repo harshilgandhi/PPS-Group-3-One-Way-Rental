@@ -14,6 +14,8 @@ class Graph {
 	private Map<String, Integer> nodeIds;
 	private List<String> nodes;
 	private Path[][] paths;
+	public static int MAP_MAX_DISTANCE = 1;
+	
 
 	public Graph(Edge[] edges) {
 		Map<String, Set<String>> neighbors = new HashMap<String, Set<String>>();
@@ -89,6 +91,11 @@ class Graph {
 					neighborPath = paths[id][neighborId];
 					if(!neighborPath.known) {
 						int d = path.dist + 1;
+						
+						if(d > MAP_MAX_DISTANCE) {
+							MAP_MAX_DISTANCE = d;
+						}
+						
 						if( d < neighborPath.dist ) {
 							neighborPath.dist = d;
 							neighborPath.nextId = path.id;

@@ -1,6 +1,7 @@
 package rental.g3;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
@@ -90,15 +91,41 @@ public class SimpleActionGenerator extends ActionGenerator {
 		// a driver has two options
 		// 1. continue on track
 		// 2. reroute to pickup new passengers		
-		List<Pickup> pickups = findPickups(rid);
+		List<Pickup> pickups = findPickups(r);
 		if (pickups.size() > 0) {
-			throw new RuntimeException("do not consider pick up at this time");
+			// Figure out which pickup we want.
+			List<PickupDistance> pickDs = new ArrayList<PickupDistance>(pickups.size());
+			for(Pickup p : pickups) {
+				pickDs.add(
+						new PickupDistance(
+								pickups.indexOf(p), 
+								game.rndist(r.rid, p.pickLoc) + game.nndist(p.pickLoc, p.dropLoc)));
+			}
+			
+			Collections.sort(pickDs);
+			pickDs.subList(0, 3 - passengers.size());
+			Collections.reverse(pickDs);
+			
+			Car car;
+			Relocator otherR;
+			for(int i = 0; i < 3 - passengers.size(); i++) {
+				// pop seats.
+				Pickup pickup = pickups.get(pickDs.get(i).pid);
+				car = game.cars[pickup.cid];
+				otherR = game.relocators[pickup.rid];
+				car.assignDriver(otherR);
+				otherR.assignCar(car);
+				otherR.pickuper = r;
+				
+				r.pushRoute(new Route(r.car.cid, pickup.dropLoc));
+				if(r.firstRoute().dst != pickup.pickLoc) {
+					r.pushRoute(new Route(r.car.cid, pickup.pickLoc));
+				}
+			}
 		}
-		else { // continue on the track
-			nextLoc = game.graph.nextMove(r.location, r.firstRoute().dst);
-			r.move(RelocatorStatus.ENROUTE, nextLoc);
-			r.car.move(nextLoc);
-		}		
+		nextLoc = game.graph.nextMove(r.location, r.firstRoute().dst);
+		r.move(RelocatorStatus.ENROUTE, nextLoc);
+		r.car.move(nextLoc);
 		
 		toDeposit = depositOrNot(nextLoc, r.getRoutes());			
 		Drive drive = new Drive(rid, r.car.cid, toDeposit, passengers.toArray(new RGid[0]), game.graph.getNodeName(nextLoc));
@@ -130,36 +157,31 @@ public class SimpleActionGenerator extends ActionGenerator {
 		return topick;
 	}
 	
-	private List<Pickup> findPickups(int rid) {
+	private List<Pickup> findPickups(Relocator relocator) {
 		
-		return new ArrayList<Pickup>();
-		
-		// if there is a waiting relocator within distance d
+		// if there is a waiting relocator (!hasCar) within distance d
 		// && is not scheduled a pickup
 		// && there is an available car within distance d from the pickup location
 		
-//		List<Pickup> pickups = new ArrayList<Pickup>();
-//		for (int oid = 0; oid < game.nRelocator; oid++) {
-//			Relocator or = game.relocators[oid];
-//			// skip myself, skip relocator who is scheduled, or has another pickup
-//			if (oid == rid || or.isScheduled() || or.pickuper != null) 
-//				continue;
-//			// skip those who have a car
-//			if (or.hasCar())
-//				continue;
-//			// skip too-far relocator
-//			if (game.rrdist(rid, oid) > Pickup.MaxPickupDist)
-//				continue;
-//			// find nearby empty cars
-//			for (int cid = 0; cid < game.nCar; cid++) {
-//				Car car = game.cars[cid];
-//				if (!car.isDeposit() || !car.isScheduled() || car.isInuse() 
-//					|| game.rndist(rid, car.location) > Pickup.MaxPickupDist)
-//					continue;
-//				pickups.add(new Pickup(oid, cid, or.location, car.location));				
-//			}
-//		}				
-//		return pickups;
+		List<Pickup> pickups = new ArrayList<Pickup>();
+		
+		for(Relocator otherR : game.relocators) {
+			
+			if( !otherR.hasCar() && 
+				game.rrdist(otherR.rid, relocator.rid) <= Graph.MAP_MAX_DISTANCE// Fix me
+				) {
+				assert(!otherR.isScheduled());
+				
+				for(Car car : game.cars) {
+					if(!car.isInuse() && game.rndist(relocator.rid, car.location) <= Graph.MAP_MAX_DISTANCE) {
+						pickups.add(new Pickup(otherR.rid, car.cid, otherR.location, car.location));
+					}
+				}
+				
+			}
+		}
+		
+		return pickups;
 	}	
 	
 

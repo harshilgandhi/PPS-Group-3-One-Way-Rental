@@ -36,7 +36,7 @@ public class Rental {
 			// get file of players
 			BufferedReader in = new BufferedReader(new FileReader(new File(txtPath)));
 			// get tools
-			ClassLoader loader = ToolProvider.getSystemToolClassLoader();
+			ClassLoader loader = ClassLoader.getSystemClassLoader();
 			JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 			StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 			// load players
