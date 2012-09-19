@@ -39,5 +39,10 @@ class Pickup {
 	int cid;
 	int pickLoc;
 	int dropLoc;
+	
+	@Override
+	public String toString() {
+		return "Pickup[driver:" + rid + ", car:" + cid + "]"; 
+	}
 }
 

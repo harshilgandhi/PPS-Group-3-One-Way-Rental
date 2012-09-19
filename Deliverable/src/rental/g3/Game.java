@@ -6,6 +6,7 @@ import java.util.List;
 
 // can I drive a car and drop it at any location on the road?
 class Game {
+	private static final boolean DEBUG = true;
 	Graph graph;
 	int nRelocator = 0;
 	int nCar = 0;
@@ -16,6 +17,12 @@ class Game {
 	int gid = 0;
 	
 	final int MaxPickupDist = 3;
+	
+	public static void log(String message) {
+		if(DEBUG) {
+			System.out.println(message);
+		}
+	}
 	
 	public Game(int gid, Graph g, int ncar, Car[] cars, int nrel, int nTurns) {
 		this.nCar = ncar;
