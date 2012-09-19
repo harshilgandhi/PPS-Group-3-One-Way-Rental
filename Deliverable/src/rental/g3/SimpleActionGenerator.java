@@ -102,13 +102,15 @@ public class SimpleActionGenerator extends ActionGenerator {
 								game.rndist(r.rid, p.pickLoc) + game.nndist(p.pickLoc, p.dropLoc)));
 			}
 			
+			int minSize = Math.min(3 - passengers.size(), pickDs.size());
+			
 			Collections.sort(pickDs);
-			pickDs.subList(0, Math.min(3 - passengers.size(), pickDs.size()));
+			pickDs.subList(0, minSize);
 			Collections.reverse(pickDs);
 			
 			Car car;
 			Relocator otherR;
-			for(int i = 0; i < 3 - passengers.size(); i++) {
+			for(int i = 0; i < minSize; i++) {
 				// pop seats.
 				Pickup pickup = pickups.get(pickDs.get(i).pid);
 				
