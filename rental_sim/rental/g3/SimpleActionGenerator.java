@@ -304,9 +304,10 @@ public class SimpleActionGenerator extends ActionGenerator {
 		
 		for(Relocator otherR : game.relocators) {
 			
+			// TODO: Optimize pickups until turn limit then relax perimeter to entire map.
 			if( !otherR.hasCar() && 
 				!otherR.isScheduled() &&
-				game.rrdist(otherR.rid, relocator.rid) <= Graph.MAP_MAX_DISTANCE// Fix me
+				game.rrdist(otherR.rid, relocator.rid) <= Graph.MAP_MAX_DISTANCE
 				) {
 				assert(!otherR.isScheduled());
 				
@@ -332,7 +333,9 @@ public class SimpleActionGenerator extends ActionGenerator {
 	
 	// is assigned a car, but not at the car
 	private Drive genPassengerDrive(int rid) {			
-		Relocator r = game.relocators[rid];						
+		Relocator r = game.relocators[rid];	
+		
+		// TODO: Choose pickups optimized from Waiting perspective.
 		
 		if(r.pickuper == null || r.pickuper.car == null) {
 			// We were kicked out of car in previous step, so drive!
