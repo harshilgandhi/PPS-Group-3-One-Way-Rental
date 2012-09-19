@@ -1,12 +1,37 @@
 package rental.g3;
 
 class Route {
+	public static final int PICKUP = 1;
+	public static final int DROPOFF = 2;
+	
 	int cid;
 	int dst;
+	int forRelocator = -1;
+	int type;
 
 	public Route(int cid, int dst) {
 		this.cid = cid;
 		this.dst = dst;
+	}
+	
+	public Route(int cid, int dst, int forRelocator, int type) {
+		this.cid = cid;
+		this.dst = dst;
+		this.forRelocator = forRelocator;
+		this.type = type;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof Route) {
+			Route r = (Route) obj;
+			return r.cid == cid &&
+					r.dst == dst && 
+					r.type == type &&
+					r.forRelocator == forRelocator;
+		}
+		
+		return false;
 	}
 }
 

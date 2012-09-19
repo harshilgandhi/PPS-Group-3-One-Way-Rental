@@ -1,5 +1,6 @@
 package rental.g3;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -26,10 +27,11 @@ class Relocator {
 	// Aux Structure:	
 	// for enrouting relocator
 	//private Route route;			
-	Stack<Route> routes = new Stack<Route>();
+	private Stack<Route> routes = new Stack<Route>();
 	// for pickup relocator
 	//private List<Pickup> pickups;	
 	public int baseDestination;
+	private int chainCar = -1;
 	
 	public Relocator(int id, RelocatorStatus s, int loc) {
 		rid = id;
@@ -73,6 +75,25 @@ class Relocator {
 		}
 		routes.push(r);
 	}
+	
+	private void removeRoutes(int rid, int type) {
+		List<Route> removeRoutes = new ArrayList<Route>();
+		for(Route r : routes) {
+			if(r.forRelocator == rid && r.type == type) {
+				removeRoutes.add(r);
+			}
+		}
+		routes.removeAll(removeRoutes);
+	}
+	
+	public void removePickupRoutes(int rid) {
+		removeRoutes(rid, Route.PICKUP);
+	}
+	
+	public void removeDropOffRoutes(int rid) {
+		removeRoutes(rid, Route.DROPOFF);
+	}
+	
 	public void popRoute() {
 		routes.pop();
 	}
@@ -89,6 +110,9 @@ class Relocator {
 	}
 	
 	public void assignCar(Car car) {
+		if(car.cid == chainCar) {
+			chainCar = -1;
+		}
 		this.car = car;
 		pushRoute(new Route(car.cid, car.destination));
 		this.baseDestination = car.destination;
@@ -101,5 +125,17 @@ class Relocator {
 	
 	public boolean isDriving() {
 		return car != null && car.location == location;
+	}
+	
+	public void setChainCar(int cid) {
+		this.chainCar = cid;
+	}
+	
+	public boolean hasChainCar() {
+		return chainCar >= 0;
+	}
+	
+	public int getChainCar() {
+		return this.chainCar;
 	}
 }

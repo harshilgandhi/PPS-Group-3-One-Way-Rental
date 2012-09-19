@@ -182,9 +182,12 @@ Munich -- Copenhagen
 		game.offerRelocators = new LinkedList<Relocator>();
 		for(Relocator r : game.relocators) {
 			if(r.isDriving()) {
-				int seats = 3 - r.car.passengers.size();
 				
-				for(int i = 0; i < seats; i ++) {
+				// We only need to make one offer
+				// and when we accept requests we can then
+				// accept more than one.
+				int seats = 3 - r.car.passengers.size();
+				if(seats > 0) {
 					game.offers.add(new Offer(
 							game.graph.getNodeName(r.getLastLocation()),
 							game.graph.getNodeName(r.getLocation()),
@@ -194,7 +197,6 @@ Munich -- Copenhagen
 					game.offerRelocators.add(r);
 					Game.log("Driver: " + r.rid + " making offer.");
 				}
-				
 			}
 		}
 		
