@@ -64,7 +64,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 	}
 	
 	private Drive genDriverDrive(int rid) {	
-		Relocator r = game.relocators[rid];		
+		Relocator r = game.relocators[rid];	
+		r.pickuper = null;
 		assert(r.hasCar());
 		int nextLoc;
 		boolean toDeposit;
@@ -78,21 +79,26 @@ public class SimpleActionGenerator extends ActionGenerator {
 				if (otherR.isDriving()) { // if reach its destination
 					Game.log("Driver: " + r.rid + " dropped off passenger: " + passenger.rid);
 
-					Game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 					dropoffs.add(passenger);
 					game.relocators[passenger.rid].pickuper = null; // reset pickuper
 					r.routes.pop();
-				} else {
-					Game.log("--- passenger: " + passenger.rid + " " + game.relocators[passenger.rid].car.location + "!=" + r.location);
+					Game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 				}
 			}			
 		}
 		passengers.removeAll(dropoffs);		
-				
+		
+		int ourPassengers = 0;
+		for(Relocator otherR : game.relocators) {
+			if(otherR.pickuper == r) {
+				ourPassengers++;
+			}
+		}
 		// a driver has two options
 		// 1. continue on track
 		// 2. reroute to pickup new passengers		
 		List<Pickup> pickups = findPickups(r);
+		if (ourPassengers == 0) // Only do 1 passenger.
 		if (pickups.size() > 0) {
 			// Figure out which pickup we want.
 			List<PickupDistance> pickDs = new ArrayList<PickupDistance>(pickups.size());
@@ -111,7 +117,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 			
 			Car car;
 			Relocator otherR;
-			for(int i = 0; i < minSize; i++) {
+			for(int i = 0; i < minSize && ourPassengers < 1; i++) {
 				// pop seats.
 				Pickup pickup = pickups.get(pickDs.get(i).pid);
 				
@@ -124,11 +130,16 @@ public class SimpleActionGenerator extends ActionGenerator {
 					
 					Game.log("Adding pickup for " + r.rid + ": " + pickup);
 					
-					r.pushRoute(new Route(r.car.cid, pickup.dropLoc));
+					if(r.firstRoute().dst != pickup.dropLoc) {
+						r.pushRoute(new Route(r.car.cid, pickup.dropLoc));
+					}
+					
 					if(r.firstRoute().dst != pickup.pickLoc) {
-						Game.log("Pushed pickup route.");
+						Game.log("Pushed pickup route to: " + game.graph.getNodeName(pickup.pickLoc));
 						r.pushRoute(new Route(r.car.cid, pickup.pickLoc));
 					}
+					
+					ourPassengers++;
 				}
 			}
 		}
@@ -150,9 +161,23 @@ public class SimpleActionGenerator extends ActionGenerator {
 		r.move(RelocatorStatus.ENROUTE, nextLoc);
 		r.car.move(nextLoc);
 		
-		Game.log("Driver: "+ r.rid + " at " + game.graph.getNodeName(r.location) + " going to " + game.graph.getNodeName(nextLoc));
+		Game.log("Driver: "+ r.rid + " going to " + game.graph.getNodeName(nextLoc));
 		
-		toDeposit = depositOrNot(nextLoc, r.getRoutes());			
+		toDeposit = depositOrNot(nextLoc, r.getRoutes());
+		
+		if(toDeposit && passengers.size() > 0) {
+			// this car gets deposited so our passenger sits in it
+			// and is no longer updated since we use the pickup relocator
+			// to see if he's a passenger (which by now has a new car).
+			// so we update him here.
+			for(RGid rgid : passengers) {
+				if(rgid.gid == game.gid) {
+					game.relocators[rgid.rid].pickuper = null;
+					game.relocators[rgid.rid].location = nextLoc;
+				}
+			}
+		}
+		
 		Drive drive = new Drive(rid, r.car.cid, toDeposit, passengers.toArray(new RGid[0]), game.graph.getNodeName(nextLoc));
 		
 		// if the car is deposited, consider assigning him a new car
@@ -221,11 +246,11 @@ public class SimpleActionGenerator extends ActionGenerator {
 	private Drive genPassengerDrive(int rid) {			
 		Relocator r = game.relocators[rid];						
 		
-//		if(r.pickuper == null) {
-//			// We were kicked out of car in previous step, so drive!
-//			return genDriverDrive(rid);
-//		}
-		
+		if(r.pickuper == null) {
+			// We were kicked out of car in previous step, so drive!
+			return genDriverDrive(rid);
+		}
+		Game.log("passengerDrive for: " + rid);
 		// follows the driver
 		if (r.pickuper.car.passengers.contains(new RGid(rid, game.gid)))
 			r.move(RelocatorStatus.PASSENGER, r.pickuper.location);		

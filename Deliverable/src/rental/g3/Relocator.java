@@ -28,7 +28,7 @@ class Relocator {
 	Stack<Route> routes = new Stack<Route>();
 	// for pickup relocator
 	//private List<Pickup> pickups;	
-	private int baseDestination;
+	public int baseDestination;
 	
 	public Relocator(int id, RelocatorStatus s, int loc) {
 		rid = id;
@@ -59,6 +59,9 @@ class Relocator {
 	}
 	
 	public void pushRoute(Route r) {
+		if(routes.size() == 0) {
+			baseDestination = r.dst;
+		}
 		routes.push(r);
 	}
 	public void popRoute() {
