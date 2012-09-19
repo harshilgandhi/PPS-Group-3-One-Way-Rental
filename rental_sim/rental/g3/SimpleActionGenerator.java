@@ -1,6 +1,7 @@
 package rental.g3;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
@@ -202,7 +203,34 @@ public class SimpleActionGenerator extends ActionGenerator {
 		
 		toDeposit = depositOrNot(nextLoc, r.getRoutes());
 		
+		
 		if(toDeposit) {
+			// Determine if we're the last available car.
+			// This can happen if all cars are deposited at the same time.
+			boolean moreRelocators = false;
+			for(Relocator otherR : game.relocators) {
+				if(otherR != r && otherR.hasCar()) {
+					moreRelocators = true;
+					break;
+				}
+			}
+			
+			List<Car> availCars = new ArrayList<Car>(Arrays.asList(game.cars));
+			for(int i = 0; i < availCars.size();) {
+				if(availCars.get(i).isDeposit()) {
+					availCars.remove(i);
+				} else {
+					i++;
+				}
+			}
+			
+			if(!moreRelocators && !(availCars.size() <= 1)) {
+				// This is the last relocator with a car so don't deposit.
+				Game.log("Driver: " + r.rid + " is last driver so refusing to deposit.");
+				toDeposit = false;
+			}
+			
+			
 			Game.log("Driver: " + r.rid + " will deposit car.");
 			if(passengers.size() > 0) {
 				// this car gets deposited so our passenger sits in it
