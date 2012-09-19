@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import rental.sim.Drive;
@@ -231,18 +232,24 @@ Munich -- Copenhagen
 	@Override
 	public void verify() throws Exception {
 		// Not for monday
-		Offer[] offerArr = game.offers.toArray(new Offer[0]);
-		for ( Offer offer : offerArr)
+		
+		for ( int i = 0; i < game.offers.size(); i ++)
 		{
-			RGid [] rgidArr = offer.requests();
+			Relocator r = game.offerRelocators.get(i);
+			RGid [] rgidArr = game.offers.get(i).requests();
 			boolean[] verifyArr = new boolean[rgidArr.length];
-			for (int i = 0; i < rgidArr.length ; i ++)
+			int aSeats = 3 - r.car.passengers.size();
+			for ( int j = 0; j < aSeats; j++ )
 			{
-				 
-					
-				
+				Random gen = new Random();
+				int index = 0;
+				do
+				{
+					index = gen.nextInt(verifyArr.length);
+				}while(verifyArr[index]==true);
+				verifyArr[index] = true;
 			}
-			//offer.verify(verifyArr, rental.sim.Player.this);
+			game.offers.get(i).verify(verifyArr, Player.this);
 		}
 	}
 		
