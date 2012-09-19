@@ -103,7 +103,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 			}
 			
 			Collections.sort(pickDs);
-			pickDs.subList(0, 3 - passengers.size());
+			pickDs.subList(0, Math.min(3 - passengers.size(), pickDs.size()));
 			Collections.reverse(pickDs);
 			
 			Car car;
@@ -111,15 +111,21 @@ public class SimpleActionGenerator extends ActionGenerator {
 			for(int i = 0; i < 3 - passengers.size(); i++) {
 				// pop seats.
 				Pickup pickup = pickups.get(pickDs.get(i).pid);
-				car = game.cars[pickup.cid];
-				otherR = game.relocators[pickup.rid];
-				car.assignDriver(otherR);
-				otherR.assignCar(car);
-				otherR.pickuper = r;
 				
-				r.pushRoute(new Route(r.car.cid, pickup.dropLoc));
-				if(r.firstRoute().dst != pickup.pickLoc) {
-					r.pushRoute(new Route(r.car.cid, pickup.pickLoc));
+				if(!game.relocators[pickup.rid].hasCar()) { // Because he may have already qualified for a better pickup route.
+					car = game.cars[pickup.cid];
+					otherR = game.relocators[pickup.rid];
+					car.assignDriver(otherR);
+					otherR.assignCar(car);
+					otherR.pickuper = r;
+					
+					Game.log("Adding pickup for " + r.rid + ": " + pickup);
+					
+					r.pushRoute(new Route(r.car.cid, pickup.dropLoc));
+					if(r.firstRoute().dst != pickup.pickLoc) {
+						Game.log("Pushed pickup route.");
+						r.pushRoute(new Route(r.car.cid, pickup.pickLoc));
+					}					
 				}
 			}
 		}

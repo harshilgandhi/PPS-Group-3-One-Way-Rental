@@ -80,6 +80,7 @@ class Relocator {
 		this.car = car;
 		pushRoute(new Route(car.cid, car.destination));
 		this.baseDestination = car.destination;
+		
 	}
 	
 	public boolean hasCar() {
