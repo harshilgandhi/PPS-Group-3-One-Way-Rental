@@ -30,6 +30,7 @@ class Relocator {
 	// for pickup relocator
 	//private List<Pickup> pickups;	
 	public int baseDestination;
+	private int chainCar = -1;
 	
 	public Relocator(int id, RelocatorStatus s, int loc) {
 		rid = id;
@@ -89,6 +90,9 @@ class Relocator {
 	}
 	
 	public void assignCar(Car car) {
+		if(car.cid == chainCar) {
+			chainCar = -1;
+		}
 		this.car = car;
 		pushRoute(new Route(car.cid, car.destination));
 		this.baseDestination = car.destination;
@@ -101,5 +105,17 @@ class Relocator {
 	
 	public boolean isDriving() {
 		return car != null && car.location == location;
+	}
+	
+	public void setChainCar(int cid) {
+		this.chainCar = cid;
+	}
+	
+	public boolean hasChainCar() {
+		return chainCar >= 0;
+	}
+	
+	public int getChainCar() {
+		return this.chainCar;
 	}
 }
