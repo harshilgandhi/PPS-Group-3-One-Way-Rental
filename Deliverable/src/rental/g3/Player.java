@@ -3,8 +3,10 @@ package rental.g3;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import rental.sim.Drive;
 import rental.sim.Edge;
@@ -177,6 +179,7 @@ Munich -- Copenhagen
 		
 		// Not for monday
 		game.offers = new LinkedList<Offer>();
+		game.offerRelocators = new LinkedList<Relocator>();
 		for(Relocator r : game.relocators) {
 			if(r.isDriving()) {
 				int seats = 3 - r.car.passengers.size();
@@ -187,7 +190,8 @@ Munich -- Copenhagen
 							game.graph.getNodeName(r.getLocation()),
 							game.turn,
 							Player.this
-							));					
+							));		
+					game.offerRelocators.add(r);
 					Game.log("Driver: " + r.rid + " making offer.");
 				}
 				
@@ -199,16 +203,25 @@ Munich -- Copenhagen
 
 	@Override
 	public void request(Offer[] offers) throws Exception {
+		this.game.gameOffers = offers;
 		for(Relocator r : game.relocators) {
-			if(!r.isDriving() && r.hasCar()) {
+			if(!r.isDriving() && r.hasCar() && r.pickuper != null) {
 				// relocator is potential candidate.
 				for(Offer offer : offers) {
 					// If offer is 
-					if(offer.src == game.graph.getNodeName(r.getLastLocation()) && offer.time == game.turn) {
+					if( offer.group != game.gid && 
+						offer.src == game.graph.getNodeName(r.getLastLocation()) && offer.time == game.turn) {
+						int distToRelocator = game.rrdist(r.rid, r.pickuper.rid);
+						int distToCar = game.rndist(r.rid, r.car.location);
 						
+						int offerToRelocator = game.rndist(r.pickuper.rid, game.graph.getNodeId(offer.dst));
+						int offerToCar = game.nndist(r.car.location, game.graph.getNodeId(offer.dst));
+						
+						if(offerToRelocator < distToRelocator || offerToCar < distToCar) {
+							offer.request(r.rid, Player.this);
+						}
 					}
 				}
-				
 			}
 		}
 	}
@@ -220,7 +233,30 @@ Munich -- Copenhagen
 	}
 
 	@Override
-	public DriveRide action() throws Exception {				
+	public DriveRide action() throws Exception {
+		List<Ride> rides = new ArrayList<Ride>();
+		Set<Integer> relocatorsRiding = new HashSet<Integer>();
+		RGid rgid = null;
+		
+		outer: for(Offer offer: game.gameOffers) {
+			for(int i = 0; i < offer.requests().length; i++) {
+				rgid = offer.requests()[i];
+				// If we're same group and offer was accepted
+				if(
+					rgid.gid == game.gid && // Same group
+					!relocatorsRiding.contains(rgid.rid) && // We didn't already accept offer for relocator. 
+					offer.verifications()[i] // Request accepted
+							) {
+					Game.log("Driver: " + rgid.rid + " making ride for accepted offer.");
+					rides.add(new Ride(rgid.rid,offer.group,offer.dst));
+					relocatorsRiding.add(rgid.rid);
+					continue outer;
+				}
+			}
+		}
+		
+		this.driveRide.ride = rides.toArray(new Ride[0]);
+		
 		return this.driveRide;
 	}
 	
