@@ -114,6 +114,7 @@ public class Player extends rental.sim.Player {
 		// Not for monday
 		game.offers = new LinkedList<Offer>();
 		game.offerRelocators = new LinkedList<Relocator>();
+		
 		for(Relocator r : game.relocators) {
 			if(r.isDriving()) {
 				
@@ -174,7 +175,7 @@ public class Player extends rental.sim.Player {
 		Set<Integer> relocatorsRiding = new HashSet<Integer>();
 		RGid rgid = null;
 		
-		outer: for(Offer offer: game.gameOffers) {
+		for(Offer offer: game.gameOffers) {
 			for(int i = 0; i < offer.requests().length; i++) {
 				rgid = offer.requests()[i];
 				// If we're same group and offer was accepted
@@ -186,7 +187,7 @@ public class Player extends rental.sim.Player {
 					Game.log("Driver: " + rgid.rid + " making ride for accepted offer.");
 					rides.add(new Ride(rgid.rid,offer.group,offer.dst));
 					relocatorsRiding.add(rgid.rid);
-					continue outer;
+					continue;
 				}
 			}
 		}
