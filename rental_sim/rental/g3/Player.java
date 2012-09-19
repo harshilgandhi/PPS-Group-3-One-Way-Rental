@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import rental.sim.Edge;
@@ -167,7 +168,27 @@ public class Player extends rental.sim.Player {
 	public void verify() throws Exception {
 		// Not for monday
 		
+		for ( int i = 0; i < game.offers.size(); i ++)
+		{
+			Relocator r = game.offerRelocators.get(i);
+			RGid [] rgidArr = game.offers.get(i).requests();
+			boolean[] verifyArr = new boolean[rgidArr.length];
+			int aSeats = 3 - r.car.passengers.size();
+			for ( int j = 0; j < aSeats; j++ )
+			{
+				Random gen = new Random();
+				int index = 0;
+				do
+				{
+					index = gen.nextInt(verifyArr.length);
+				}while(verifyArr[index]==true);
+				verifyArr[index] = true;
+			}
+			game.offers.get(i).verify(verifyArr, Player.this);
+		}
 	}
+		
+	
 
 	@Override
 	public DriveRide action() throws Exception {
