@@ -149,7 +149,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 		for (Relocator or : game.relocators) {
 			// If we arrive at same location as or and we're marked as pick up and
 			// or is not already our passenger.  pick his ass up.
-			if (or.pickuper == r && or.location == r.location && !passengers.contains(new RGid(or.rid, game.gid))) {
+			if (or.pickuper == r && or.getLocation() == r.getLocation() && !passengers.contains(new RGid(or.rid, game.gid))) {
 				passengers.add(new RGid(or.rid, game.gid));
 				Game.log("Driver: " + r.rid + " We've arrived to pickup:" + or.rid);
 				r.routes.pop();
@@ -157,7 +157,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 			}
 		}
 		
-		nextLoc = game.graph.nextMove(r.location, r.firstRoute().dst);
+		nextLoc = game.graph.nextMove(r.getLocation(), r.firstRoute().dst);
 		r.move(RelocatorStatus.ENROUTE, nextLoc);
 		r.car.move(nextLoc);
 		
@@ -165,15 +165,18 @@ public class SimpleActionGenerator extends ActionGenerator {
 		
 		toDeposit = depositOrNot(nextLoc, r.getRoutes());
 		
-		if(toDeposit && passengers.size() > 0) {
-			// this car gets deposited so our passenger sits in it
-			// and is no longer updated since we use the pickup relocator
-			// to see if he's a passenger (which by now has a new car).
-			// so we update him here.
-			for(RGid rgid : passengers) {
-				if(rgid.gid == game.gid) {
-					game.relocators[rgid.rid].pickuper = null;
-					game.relocators[rgid.rid].location = nextLoc;
+		if(toDeposit) {
+			Game.log("Driver: " + r.rid + " deposited car at ");
+			if(passengers.size() > 0) {
+				// this car gets deposited so our passenger sits in it
+				// and is no longer updated since we use the pickup relocator
+				// to see if he's a passenger (which by now has a new car).
+				// so we update him here.
+				for(RGid rgid : passengers) {
+					if(rgid.gid == game.gid) {
+						game.relocators[rgid.rid].pickuper = null;
+						game.relocators[rgid.rid].setLocation(nextLoc);
+					}
 				}
 			}
 		}
@@ -224,7 +227,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				
 				for(Car car : game.cars) {
 					if(!car.isInuse() && !car.isDeposit && game.rndist(relocator.rid, car.location) <= Graph.MAP_MAX_DISTANCE) {
-						pickups.add(new Pickup(otherR.rid, car.cid, otherR.location, car.location));
+						pickups.add(new Pickup(otherR.rid, car.cid, otherR.getLocation(), car.location));
 					}
 				}
 				
@@ -238,7 +241,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 	private Drive genOtherDrive(int i) {
 		Relocator r = game.relocators[i];			
 		assert(r.pickuper == null);
-		r.move(RelocatorStatus.WAITING, r.location);
+		r.move(RelocatorStatus.WAITING, r.getLocation());
 		return null;
 	}
 	
@@ -253,9 +256,9 @@ public class SimpleActionGenerator extends ActionGenerator {
 		Game.log("passengerDrive for: " + rid);
 		// follows the driver
 		if (r.pickuper.car.passengers.contains(new RGid(rid, game.gid)))
-			r.move(RelocatorStatus.PASSENGER, r.pickuper.location);		
+			r.move(RelocatorStatus.PASSENGER, r.pickuper.getLocation());		
 		else  // pickuper not here yet
-			r.move(RelocatorStatus.PASSENGER, r.location);		
+			r.move(RelocatorStatus.PASSENGER, r.getLocation());		
 		return null;
 	}
 }

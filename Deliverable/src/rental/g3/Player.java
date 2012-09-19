@@ -157,7 +157,7 @@ Munich -- Copenhagen
 				relocators[i] = new Relocator(i, Relocator.RelocatorStatus.ENROUTE, game.graph.getNodeId(startingNodes[i]));
 				relocators[i].assignCar(game.cars[carId]);
 				game.cars[carId].assignDriver(relocators[i]);
-				assert(relocators[i].location == game.cars[carId].location);
+				assert(relocators[i].getLocation() == game.cars[carId].location);
 			}
 		}
 		

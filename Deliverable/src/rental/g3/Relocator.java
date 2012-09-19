@@ -15,7 +15,8 @@ class Relocator {
 	}
 		
 	int rid;
-	int location;
+	private int lastLocation;
+	private int location;
 	RelocatorStatus status;
 	Car car = null;
 	Relocator pickuper = null;	
@@ -34,6 +35,7 @@ class Relocator {
 		rid = id;
 		status = s;
 		location = loc;
+		lastLocation = loc;
 	}
 	
 	public RelocatorStatus getStatus() {
@@ -45,16 +47,23 @@ class Relocator {
 	public int getLocation() {
 		return location;
 	}
+	
 	public void setLocation(int location) {
+		this.lastLocation = this.location;
 		this.location = location;
 	}
+	
+	public int getLastLocation() {
+		return lastLocation;
+	}
+	
 	public Stack<Route> getRoutes() {
 		return routes;
 	}
 	
 	public void move(RelocatorStatus nextStatus, int nextLoc) {
 		this.status = nextStatus;
-		this.location = nextLoc;
+		setLocation(nextLoc);
 		this.scheduled = true;
 	}
 	
