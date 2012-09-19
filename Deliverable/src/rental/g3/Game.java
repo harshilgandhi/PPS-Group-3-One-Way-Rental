@@ -1,8 +1,11 @@
 package rental.g3;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 // Bookkeeping all the information about the game
+
+import rental.sim.Offer;
 
 // can I drive a car and drop it at any location on the road?
 class Game {
@@ -17,6 +20,7 @@ class Game {
 	int gid = 0;
 	
 	final int MaxPickupDist = 3;
+	public List<Offer> offers;
 	
 	public static void log(String message) {
 		if(DEBUG) {

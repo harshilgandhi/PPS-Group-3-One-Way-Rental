@@ -3,6 +3,7 @@ package rental.g3;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import rental.sim.Drive;
@@ -13,7 +14,8 @@ import rental.sim.Ride;
 
 public class Player extends rental.sim.Player {
 	// We can keep all the information about the game into this structure
-	private Game game;	
+	private Game game;
+	private DriveRide driveRide;
  	
 	public String name()
 	{
@@ -168,14 +170,47 @@ Munich -- Copenhagen
 
 	@Override
 	public Offer[] offer() throws Exception {
+		game.turn++;
+		
+		// Calculate the moves for this turn.
+		this.driveRide = generateDriveRide();
+		
 		// Not for monday
-		return new Offer[0];
+		game.offers = new LinkedList<Offer>();
+		for(Relocator r : game.relocators) {
+			if(r.isDriving()) {
+				int seats = 3 - r.car.passengers.size();
+				
+				for(int i = 0; i < seats; i ++) {
+					game.offers.add(new Offer(
+							game.graph.getNodeName(r.getLastLocation()),
+							game.graph.getNodeName(r.getLocation()),
+							game.turn,
+							Player.this
+							));					
+					Game.log("Driver: " + r.rid + " making offer.");
+				}
+				
+			}
+		}
+		
+		return game.offers.toArray(new Offer[0]);
 	}
 
 	@Override
 	public void request(Offer[] offers) throws Exception {
-		// Not for monday
-		
+		for(Relocator r : game.relocators) {
+			if(!r.isDriving() && r.hasCar()) {
+				// relocator is potential candidate.
+				for(Offer offer : offers) {
+					// If offer is 
+					if(offer.src == game.graph.getNodeName(r.getLastLocation()) && offer.time == game.turn) {
+						
+					}
+				}
+				
+			}
+		}
 	}
 
 	@Override
@@ -186,14 +221,16 @@ Munich -- Copenhagen
 
 	@Override
 	public DriveRide action() throws Exception {				
-		
+		return this.driveRide;
+	}
+	
+	private DriveRide generateDriveRide() {
 		// before each turn starts, reset scheduling information
 		resetAction();
 		
 		ActionGenerator actGen = new SimpleActionGenerator(game);		
 		DriveRide dr = actGen.genDriveRide();		
 		// update drive results after each run
-		updateDrive();
 		return dr;
 	}
 	
@@ -204,14 +241,6 @@ Munich -- Copenhagen
 			game.cars[i].reset();
 	}
 
-	// update drives after each turn of action
-	private void updateDrive() {
-//		for (Car car : game.cars)
-//			car.move();	
-//		for (Relocator r : game.relocators)
-//			r.move();		
-	}
-	
 	// update rides before each turn of offer
 	// since all ride information is only available at that time 
 	private void updateRide(Ride[] rides) {		
