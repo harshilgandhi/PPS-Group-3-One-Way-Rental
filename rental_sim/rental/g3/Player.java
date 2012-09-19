@@ -1,14 +1,12 @@
 package rental.g3;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import rental.sim.Drive;
 import rental.sim.Edge;
 import rental.sim.Offer;
 import rental.sim.RGid;
@@ -22,72 +20,6 @@ public class Player extends rental.sim.Player {
 	public String name()
 	{
 		return "Group 3";
-	}
-	
-	public static void main(String[] args) {
-		/* Testing with dot:
-graph {
-Berlin -- Warsaw
-Berlin -- Munich
-Munich -- Warsaw
-Berlin -- Zurich
-Zurich -- Zagreb
-Zagreb -- Budapest
-Zurich -- Vienna
-Vienna -- Berlin
-Vienna -- Budapest
-Budapest -- Bucharest
-Budapest -- Moscow
-Zagreb -- Vienna
-Moscow -- Warsaw
-Warsaw -- Copenhagen
-Munich -- Copenhagen
-}
-		*/
-		Edge[] edges = new Edge[] {
-			new Edge("Berlin", "Warsaw"),
-			new Edge("Berlin", "Munich"),
-			new Edge("Munich", "Warsaw"),
-			new Edge("Berlin", "Zurich"),
-			new Edge("Zurich", "Zagreb"),
-			new Edge("Zagreb", "Budapest"),
-			new Edge("Zurich", "Vienna"),
-			new Edge("Vienna", "Berlin"),
-			new Edge("Vienna", "Budapest"),
-			new Edge("Budapest", "Bucharest"),
-			new Edge("Budapest", "Moscow"),
-			new Edge("Zagreb", "Vienna"),
-			new Edge("Moscow", "Warsaw"),
-			new Edge("Warsaw", "Copenhagen"),
-			new Edge("Munich", "Copenhagen")
-		};
-		
-		String[] carL = new String[] {
-			"Berlin",
-			"Vienna",
-			"Warsaw"
-		};
-		
-		String[] carD = new String[] {
-			"Zagreb",
-			"Budapest",
-			"Vienna"
-		};
-		
-		Player p = new Player();
-		try {
-			String[] starts = p.place(1, carL, carD, edges, 0, 1000);
-			System.out.println("Starting locations:");
-			System.out.println(Arrays.toString(starts));
-			System.out.println();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		for(int i = 0; i < p.game.graph.nodeCount(); i++) {
-			System.out.print(i + ": " + p.game.graph.getNodeName(i) + " ");
-			System.out.println(Arrays.toString(p.game.graph.getPaths()[i]));
-		}
 	}
 	
 	private Game initializeGame(int nrel, String[] carLocations,
@@ -113,6 +45,8 @@ Munich -- Copenhagen
 		// initialize the game
 		game = initializeGame(nrel, carLocations, carDestinations, edges, totalTurns);
 		
+		// TODO: Jiacheng - Optimize initial placement to account for
+		// clustered cars.
 		
 		// place relocators
 		// If we have enough relocators for every car
@@ -279,9 +213,4 @@ Munich -- Copenhagen
 			game.cars[i].reset();
 	}
 
-	// update rides before each turn of offer
-	// since all ride information is only available at that time 
-	private void updateRide(Ride[] rides) {		
-	}
-	
 }
