@@ -21,10 +21,12 @@ class Game {
 	
 	final int MaxPickupDist = 3;
 	public List<Offer> offers;
+	public LinkedList<Relocator> offerRelocators;
+	public Offer[] gameOffers;
 	
 	public static void log(String message) {
 		if(DEBUG) {
-			System.out.println(message);
+			System.err.println(message);
 		}
 	}
 	
