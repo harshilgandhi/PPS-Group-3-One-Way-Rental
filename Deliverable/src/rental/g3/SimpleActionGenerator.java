@@ -77,6 +77,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 				Relocator otherR = game.relocators[passenger.rid];
 				if (otherR.isDriving()) { // if reach its destination
 					Game.log("Driver: " + r.rid + " dropped off passenger: " + passenger.rid);
+
+					Game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 					dropoffs.add(passenger);
 					game.relocators[passenger.rid].pickuper = null; // reset pickuper
 					r.routes.pop();
@@ -138,8 +140,9 @@ public class SimpleActionGenerator extends ActionGenerator {
 			// or is not already our passenger.  pick his ass up.
 			if (or.pickuper == r && or.location == r.location && !passengers.contains(new RGid(or.rid, game.gid))) {
 				passengers.add(new RGid(or.rid, game.gid));
-				Game.log("Driver:" + r.rid + " We've arrived to pickup:" + or.rid);
+				Game.log("Driver: " + r.rid + " We've arrived to pickup:" + or.rid);
 				r.routes.pop();
+				Game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 			}
 		}
 		
@@ -147,7 +150,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 		r.move(RelocatorStatus.ENROUTE, nextLoc);
 		r.car.move(nextLoc);
 		
-		Game.log("Driver:"+ r.rid + " at " + game.graph.getNodeName(r.location) + " going to " + game.graph.getNodeName(nextLoc));
+		Game.log("Driver: "+ r.rid + " at " + game.graph.getNodeName(r.location) + " going to " + game.graph.getNodeName(nextLoc));
 		
 		toDeposit = depositOrNot(nextLoc, r.getRoutes());			
 		Drive drive = new Drive(rid, r.car.cid, toDeposit, passengers.toArray(new RGid[0]), game.graph.getNodeName(nextLoc));
