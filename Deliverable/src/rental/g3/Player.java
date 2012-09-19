@@ -216,8 +216,22 @@ Munich -- Copenhagen
 	@Override
 	public void verify() throws Exception {
 		// Not for monday
-		
+		Offer[] offerArr = game.offers.toArray(new Offer[0]);
+		for ( Offer offer : offerArr)
+		{
+			RGid [] rgidArr = offer.requests();
+			boolean[] verifyArr = new boolean[rgidArr.length];
+			for (int i = 0; i < rgidArr.length ; i ++)
+			{
+				 
+					
+				
+			}
+			//offer.verify(verifyArr, rental.sim.Player.this);
+		}
 	}
+		
+	
 
 	@Override
 	public DriveRide action() throws Exception {				
