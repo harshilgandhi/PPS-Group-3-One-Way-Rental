@@ -58,12 +58,12 @@ public class SimpleActionGenerator extends ActionGenerator {
 	}
 
 	// a simple version: deposit at once
-	private boolean depositOrNot(int nextLoc, Stack<Route> routes) {
+	private boolean depositOrNot(int nextLoc, List<Route> routes) {
 		if (routes.size() > 1)
 			return false;
 		
 		// if there is empty car there, directly deposit
-		if (nextLoc == routes.peek().dst /* && game.getEmptyCars(dstLoc).size() > 0 */)
+		if (nextLoc == routes.get(routes.size()-1).dst /* && game.getEmptyCars(dstLoc).size() > 0 */)
 			return true;
 		return false;
 	}
@@ -75,6 +75,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 		boolean toDeposit;	
 		
 		Set<RGid> passengers = r.car.passengers;
+		RGid[] copyPassengers = r.car.passengers.toArray(new RGid[0]);
 		// drop off
 		List<RGid> dropoffs = new ArrayList<RGid>();
 		for (RGid passenger : passengers) {
@@ -150,8 +151,19 @@ public class SimpleActionGenerator extends ActionGenerator {
 		Drive drive = new Drive(rid, r.car.cid, toDeposit, passengers.toArray(new RGid[0]), game.graph.getNodeName(nextLoc));
 		
 		// if the car is deposited, consider assigning him a new car
-		if (toDeposit) {
+		if (toDeposit) {					
+			// if there are still passengers
+			for (RGid passenger : copyPassengers) {
+				if (passenger.gid == game.gid) {
+					// cant use genPassengerDrive, otherwise will remove from passengers list
+					System.out.printf("Generate pdrive for %d\n", passenger.rid);
+					genPassengerDrive(passenger.rid);
+					//r.move(RelocatorStatus.PASSENGER, r.pickuper.location);
+				}
+			}
+			System.out.printf("%d deposit...\n", r.rid);
 			r.car.deposit();
+			
 			List<Car> emptyCars = game.getEmptyCars(nextLoc);
 			if (emptyCars.size() > 0) { // if there are empty cars					
 				Car emptyCar = pickCar(emptyCars);			
@@ -215,6 +227,10 @@ public class SimpleActionGenerator extends ActionGenerator {
 		Relocator r = game.relocators[rid];							
 			
 		// follows the driver
+		System.out.printf("%d waiting for %d..\n", rid, r.pickuper.rid);
+		System.out.printf(game.graph.getNodeName(r.location));
+		assert r.pickuper != null : "picker null";
+		assert r.pickuper.car != null : "car null";
 		if (r.pickuper.car.passengers.contains(new RGid(rid, game.gid))) {			
 			r.move(RelocatorStatus.PASSENGER, r.pickuper.location);	
 			if (r.pickuper.location == game.cars[r.firstRoute().cid].location) { // the passenger leaves the car here

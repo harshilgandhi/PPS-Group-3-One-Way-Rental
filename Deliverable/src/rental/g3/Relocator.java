@@ -1,5 +1,6 @@
 package rental.g3;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -25,7 +26,7 @@ class Relocator {
 	// Aux Structure:	
 	// for enrouting relocator
 	//private Route route;			
-	Stack<Route> routes = new Stack<Route>();
+	List<Route> routes = new ArrayList<Route>();
 	// for pickup relocator
 	//private List<Pickup> pickups;	
 	private int baseDestination;
@@ -48,7 +49,7 @@ class Relocator {
 	public void setLocation(int location) {
 		this.location = location;
 	}
-	public Stack<Route> getRoutes() {
+	public List<Route> getRoutes() {
 		return routes;
 	}
 	
@@ -58,14 +59,23 @@ class Relocator {
 		this.scheduled = true;
 	}
 	
+	// if the route does not exist, add it
 	public void pushRoute(Route r) {
-		routes.push(r);
+		for (int i = 0; i < routes.size(); i++) {
+			if (r.dst == routes.get(i).dst)
+				return;
+		}		
+		routes.add(r);
 	}
 	public void popRoute() {
-		routes.pop();
+		int dst = routes.get(routes.size() - 1).dst; // get the last destination
+		routes.remove(routes.size() - 1);
+		while (routes.size() > 1 && routes.get(routes.size() - 1).dst == dst) { // continue poping out 
+			routes.remove(routes.size() - 1);
+		}
 	}
 	public Route firstRoute() {
-		return routes.peek();
+		return routes.get(routes.size() - 1); // the latest route
 	}
 
 	public boolean isScheduled() {
