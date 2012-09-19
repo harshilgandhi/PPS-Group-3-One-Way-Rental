@@ -32,7 +32,14 @@ public class SimpleActionGenerator extends ActionGenerator {
 			RGid rgid = new RGid(i, game.gid);
 			for(Car car : game.cars) {
 				if( car.passengers.contains(rgid)) {
-					Game.log("Tried to set drive object on passenger.");
+					Game.log("Passenger: " + i + " is now driving...");
+					car.passengers.remove(rgid);
+					
+					if(game.relocators[i].pickuper != null) {
+						game.relocators[i].pickuper.removeDropOffRoutes(i);
+						game.relocators[i].pickuper = null;
+						Game.log("... Removing as passenger from: " + car.driver.rid);
+					}
 				}
 			}
 			
@@ -77,7 +84,6 @@ public class SimpleActionGenerator extends ActionGenerator {
 	
 	private Drive genDriverDrive(int rid) {	
 		Relocator r = game.relocators[rid];	
-		r.pickuper = null;
 		assert(r.hasCar());
 		int nextLoc;
 		boolean toDeposit;
@@ -93,7 +99,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 
 					dropoffs.add(passenger);
 					game.relocators[passenger.rid].pickuper = null; // reset pickuper
-					r.routes.pop();
+					r.removeDropOffRoutes(otherR.rid);
 					Game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 				}
 			}			
@@ -152,13 +158,13 @@ public class SimpleActionGenerator extends ActionGenerator {
 						Game.log("Adding pickup for " + r.rid + ": " + pickup);
 						
 						if(r.firstRoute().dst != pickup.dropLoc) {
-							r.pushRoute(new Route(r.car.cid, pickup.dropLoc));
+							r.pushRoute(new Route(r.car.cid, pickup.dropLoc, otherR.rid, Route.DROPOFF));
 						}
 						
 						
 						
 						Game.log("Pushed pickup route to: " + game.graph.getNodeName(pickup.pickLoc));
-						r.pushRoute(new Route(r.car.cid, pickup.pickLoc));
+						r.pushRoute(new Route(r.car.cid, pickup.pickLoc, otherR.rid, Route.PICKUP));
 						
 						ourPassengers++;
 					}
@@ -179,14 +185,14 @@ public class SimpleActionGenerator extends ActionGenerator {
 					) {
 				if(or.isDriving()) {
 					// this was a coincidence, the driver hasn't been scheduled yet but we still think
-					// he's a passenger since woure locations and pickups match.
+					// he's a passenger since our locations and pickups match.
 					or.pickuper = null;
 					continue;
 				}
 				
 				passengers.add(new RGid(or.rid, game.gid));
 				Game.log("Driver: " + r.rid + " We've arrived to pickup:" + or.rid);
-				r.routes.pop();
+				r.removePickupRoutes(or.rid);
 				Game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 			}
 		}

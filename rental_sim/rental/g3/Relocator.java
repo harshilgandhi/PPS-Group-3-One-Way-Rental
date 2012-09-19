@@ -1,5 +1,6 @@
 package rental.g3;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -26,7 +27,7 @@ class Relocator {
 	// Aux Structure:	
 	// for enrouting relocator
 	//private Route route;			
-	Stack<Route> routes = new Stack<Route>();
+	private Stack<Route> routes = new Stack<Route>();
 	// for pickup relocator
 	//private List<Pickup> pickups;	
 	public int baseDestination;
@@ -74,6 +75,25 @@ class Relocator {
 		}
 		routes.push(r);
 	}
+	
+	private void removeRoutes(int rid, int type) {
+		List<Route> removeRoutes = new ArrayList<Route>();
+		for(Route r : routes) {
+			if(r.forRelocator == rid && r.type == type) {
+				removeRoutes.add(r);
+			}
+		}
+		routes.removeAll(removeRoutes);
+	}
+	
+	public void removePickupRoutes(int rid) {
+		removeRoutes(rid, Route.PICKUP);
+	}
+	
+	public void removeDropOffRoutes(int rid) {
+		removeRoutes(rid, Route.DROPOFF);
+	}
+	
 	public void popRoute() {
 		routes.pop();
 	}
