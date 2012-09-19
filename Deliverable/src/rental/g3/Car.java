@@ -1,7 +1,9 @@
 package rental.g3;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import rental.sim.RGid;
 
@@ -13,7 +15,7 @@ class Car {
 	int location;
 	Relocator driver = null;
 	boolean isDeposit = false;
-	List<RGid> passengers = new ArrayList<RGid>();	
+	Set<RGid> passengers = new HashSet<RGid>();	
 	private boolean scheduled;
 	
 	public Car(int id, int src, int dst) {
@@ -68,13 +70,10 @@ class Car {
 		return this.driver != null;
 	}
 
-	public List<RGid> getPassengers() {
+	public Set<RGid> getPassengers() {
 		return passengers;
 	}
 
-	public void setPassengers(List<RGid> passengers) {
-		this.passengers = passengers;
-	}
 	
 	// if the car is deposited, always displayed as scheduled
 	public void reset() {

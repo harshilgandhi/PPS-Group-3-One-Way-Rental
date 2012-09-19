@@ -77,6 +77,7 @@ class Relocator {
 	}
 	
 	public void assignCar(Car car) {
+		assert(this.car == null);
 		this.car = car;
 		pushRoute(new Route(car.cid, car.destination));
 		this.baseDestination = car.destination;

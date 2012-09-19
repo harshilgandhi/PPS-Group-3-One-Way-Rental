@@ -1,8 +1,13 @@
 package rental.g3;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.Stack;
 
 import rental.g3.Relocator;
@@ -58,7 +63,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 			return false;
 		
 		// if there is empty car there, directly deposit
-		if (nextLoc== routes.peek().dst /* && game.getEmptyCars(dstLoc).size() > 0 */)
+		if (nextLoc == routes.peek().dst /* && game.getEmptyCars(dstLoc).size() > 0 */)
 			return true;
 		return false;
 	}
@@ -67,27 +72,30 @@ public class SimpleActionGenerator extends ActionGenerator {
 		Relocator r = game.relocators[rid];		
 		assert(r.hasCar());
 		int nextLoc;
-		boolean toDeposit;
+		boolean toDeposit;	
 		
-		List<RGid> passengers = r.car.passengers;
+		Set<RGid> passengers = r.car.passengers;
 		// drop off
 		List<RGid> dropoffs = new ArrayList<RGid>();
 		for (RGid passenger : passengers) {
 			if (passenger.gid == game.gid) {
 				if (game.relocators[passenger.rid].car.location == r.location) { // if reach its destination
 					dropoffs.add(passenger);
-					game.relocators[passenger.rid].pickuper = null; // reset pickuper
 				}
 			}			
 		}
 		dropoffs.removeAll(dropoffs);		
 		// pick up
-		for (Relocator or : game.relocators) {
+		for (Relocator or : game.relocators) {	
 			if (or.pickuper == r && or.location == r.location) {
 				passengers.add(new RGid(or.rid, game.gid));
 			}
 		}
-				
+		
+		// pop out a route when we reach the destination
+		if (r.location == r.firstRoute().dst) 
+			r.popRoute();				
+		
 		// a driver has two options
 		// 1. continue on track
 		// 2. reroute to pickup new passengers		
@@ -103,24 +111,35 @@ public class SimpleActionGenerator extends ActionGenerator {
 			}
 			
 			Collections.sort(pickDs);
-			pickDs.subList(0, 3 - passengers.size());
+			pickDs = pickDs.subList(0, Math.min(3 - passengers.size(), pickDs.size()));
 			Collections.reverse(pickDs);
 			
 			Car car;
 			Relocator otherR;
-			for(int i = 0; i < 3 - passengers.size(); i++) {
+			assert pickDs.size() + passengers.size() <= 3 : pickDs.size();
+			for(int i = 0; i < pickDs.size(); i++) {							
 				// pop seats.
 				Pickup pickup = pickups.get(pickDs.get(i).pid);
 				car = game.cars[pickup.cid];
 				otherR = game.relocators[pickup.rid];
+				
+				// We can only assign one car to a passenger
+				if (passengers.contains(new RGid(otherR.rid, game.gid)))
+					continue;
+				
+				if (otherR.hasCar())
+					continue;
+				
 				car.assignDriver(otherR);
 				otherR.assignCar(car);
 				otherR.pickuper = r;
+	
 				
-				r.pushRoute(new Route(r.car.cid, pickup.dropLoc));
-				if(r.firstRoute().dst != pickup.pickLoc) {
+				r.pushRoute(new Route(r.car.cid, pickup.dropLoc));				
+				assert r.firstRoute().dst != pickup.pickLoc : "location conflict";
+				//if(r.firstRoute().dst != pickup.pickLoc) {
 					r.pushRoute(new Route(r.car.cid, pickup.pickLoc));
-				}
+				//}
 			}
 		}
 		nextLoc = game.graph.nextMove(r.location, r.firstRoute().dst);
@@ -167,17 +186,16 @@ public class SimpleActionGenerator extends ActionGenerator {
 		
 		for(Relocator otherR : game.relocators) {
 			
-			if( !otherR.hasCar() && 
+			if( !otherR.hasCar() && !otherR.isScheduled() &&
 				game.rrdist(otherR.rid, relocator.rid) <= Graph.MAP_MAX_DISTANCE// Fix me
-				) {
-				assert(!otherR.isScheduled());
+				&& relocator.location != otherR.location) {
+				// assert(!otherR.isScheduled()); FAILED
 				
 				for(Car car : game.cars) {
-					if(!car.isInuse() && game.rndist(relocator.rid, car.location) <= Graph.MAP_MAX_DISTANCE) {
+					if(!car.isDeposit() && !car.isInuse() && game.rndist(relocator.rid, car.location) <= Graph.MAP_MAX_DISTANCE) {
 						pickups.add(new Pickup(otherR.rid, car.cid, otherR.location, car.location));
 					}
-				}
-				
+				}				
 			}
 		}
 		
@@ -194,12 +212,17 @@ public class SimpleActionGenerator extends ActionGenerator {
 	
 	// is assigned a car, but not at the car
 	private Drive genPassengerDrive(int rid) {			
-		Relocator r = game.relocators[rid];						
-		
+		Relocator r = game.relocators[rid];							
+			
 		// follows the driver
-		if (r.pickuper.car.passengers.contains(r))
-			r.move(RelocatorStatus.PASSENGER, r.pickuper.location);		
-		else  // pickuper not here yet
+		if (r.pickuper.car.passengers.contains(new RGid(rid, game.gid))) {			
+			r.move(RelocatorStatus.PASSENGER, r.pickuper.location);	
+			if (r.pickuper.location == game.cars[r.firstRoute().cid].location) { // the passenger leaves the car here
+				r.pickuper.car.passengers.remove(new RGid(rid, game.gid));
+				r.pickuper = null;
+			}
+		}
+		else // pickuper not here yet
 			r.move(RelocatorStatus.PASSENGER, r.location);		
 		return null;
 	}
