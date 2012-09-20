@@ -24,9 +24,9 @@ class Game {
 	public LinkedList<Relocator> offerRelocators;
 	public Offer[] gameOffers;
 	
-	public static void log(String message) {
+	public void log(String message) {
 		if(DEBUG) {
-			System.err.println(message);
+			System.err.println("(" + gid + "): " + message);
 		}
 	}
 	

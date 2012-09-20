@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import rental.sim.Drive;
 import rental.sim.Edge;
 import rental.sim.Offer;
 import rental.sim.RGid;
@@ -16,7 +17,7 @@ import rental.sim.Ride;
 public class Player extends rental.sim.Player {
 	// We can keep all the information about the game into this structure
 	private Game game;
-	private DriveRide driveRide;
+	private DriveBuilder[] driveBuilds;
  	
 	public String name()
 	{
@@ -110,7 +111,7 @@ public class Player extends rental.sim.Player {
 		game.turn++;
 		
 		// Calculate the moves for this turn.
-		this.driveRide = generateDriveRide();
+		this.driveBuilds = generateDriveRide();
 		
 		// Not for monday
 		game.offers = new LinkedList<Offer>();
@@ -131,7 +132,7 @@ public class Player extends rental.sim.Player {
 							Player.this
 							));		
 					game.offerRelocators.add(r);
-					Game.log("Driver: " + r.rid + " making offer.");
+					game.log("Driver: " + r.rid + " making offer.");
 				}
 			}
 		}
@@ -171,10 +172,16 @@ public class Player extends rental.sim.Player {
 		for ( int i = 0; i < game.offers.size(); i ++)
 		{
 			Relocator r = game.offerRelocators.get(i);
-			RGid [] rgidArr = game.offers.get(i).requests();
+			Offer offer = game.offers.get(i);
+			RGid [] rgidArr = offer.requests();
+			
+			if(rgidArr.length <= 0) {
+				continue;
+			}
+			
 			boolean[] verifyArr = new boolean[rgidArr.length];
 			int aSeats = 3 - r.car.passengers.size();
-			for ( int j = 0; j < aSeats; j++ )
+			for ( int j = 0; j < Math.min(aSeats, verifyArr.length); j++ )
 			{
 				Random gen = new Random();
 				int index = 0;
@@ -182,7 +189,14 @@ public class Player extends rental.sim.Player {
 				{
 					index = gen.nextInt(verifyArr.length);
 				}while(verifyArr[index]==true);
+				
 				verifyArr[index] = true;
+				for(DriveBuilder drive : this.driveBuilds) {
+					if(drive.car == r.car.cid) {
+						drive.passengerSet.add(offer.requests()[index]);
+					}
+				}
+				
 			}
 			game.offers.get(i).verify(verifyArr, Player.this);
 		}
@@ -205,7 +219,7 @@ public class Player extends rental.sim.Player {
 					!relocatorsRiding.contains(rgid.rid) && // We didn't already accept offer for relocator. 
 					offer.verifications()[i] // Request accepted
 							) {
-					Game.log("Driver: " + rgid.rid + " making ride for accepted offer.");
+					game.log("Driver: " + rgid.rid + " making ride for accepted offer to: " + offer.dst);
 					rides.add(new Ride(rgid.rid,offer.group,offer.dst));
 					relocatorsRiding.add(rgid.rid);
 					continue;
@@ -213,19 +227,22 @@ public class Player extends rental.sim.Player {
 			}
 		}
 		
-		this.driveRide.ride = rides.toArray(new Ride[0]);
+		List<Drive> driveRides = new ArrayList<Drive>(this.driveBuilds.length);
+		for(DriveBuilder builder : driveBuilds) {
+			driveRides.add(builder.build());
+		}
 		
-		return this.driveRide;
+		return new DriveRide(driveRides.toArray(new Drive[0]), rides.toArray(new Ride[0]));
 	}
 	
-	private DriveRide generateDriveRide() {
+	private DriveBuilder[] generateDriveRide() {
 		// before each turn starts, reset scheduling information
 		resetAction();
 		
 		ActionGenerator actGen = new SimpleActionGenerator(game);		
-		DriveRide dr = actGen.genDriveRide();		
+		DriveBuilder[] db = actGen.genDriveRide();		
 		// update drive results after each run
-		return dr;
+		return db;
 	}
 	
 	private void resetAction() {
