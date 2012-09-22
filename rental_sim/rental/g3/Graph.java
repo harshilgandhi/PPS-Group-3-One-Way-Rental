@@ -13,6 +13,8 @@ import rental.sim.Edge;
 class Graph {	
 	private Map<String, Integer> nodeIds;
 	private List<String> nodes;
+	
+	private int[][] adjacency; // adjacency-matrix
 	private Path[][] paths;
 	public static int MAP_MAX_DISTANCE = 1;
 	
@@ -38,17 +40,36 @@ class Graph {
 			}
 			
 			destNeighbor.add(edge.source);
-			sourceNeighbor.add(edge.destination);
+			sourceNeighbor.add(edge.destination);				
 		}
-		
-		// set id-str & str-id map
+					
+		// Build id-str & str-id map
 		nodes = new ArrayList<String>(nodeSet);
 		nodeIds = new HashMap<String, Integer>();
 		for (int i = 0; i < nodes.size(); i++)
 			nodeIds.put(nodes.get(i), i);
-			
+	
+		// Build adjacency matrix
+		int nodeCount = nodeSet.size();
+		adjacency= new int[nodeCount][nodeCount];
+				
+		for(Edge edge: edges) {
+			int src = getNodeId(edge.source);
+			int dst = getNodeId(edge.destination);
+			adjacency[src][dst] = 1;
+			adjacency[dst][src] = 1;
+		}
+		
 		paths = new Path[nodes.size()][nodes.size()];
 		shortestPath(neighbors);
+	}
+	
+	public int degreeOf(int nodeId) {
+		int degree = 0;
+		for (int i = 0; i < nodeCount(); i++) {
+			degree += adjacency[nodeId][i];
+		}
+		return degree;
 	}
 	
 	public int nodeCount() {

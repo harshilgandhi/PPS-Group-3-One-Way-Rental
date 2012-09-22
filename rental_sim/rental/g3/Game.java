@@ -4,14 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-// Bookkeeping all the information about the game
-
-import rental.g3.Graph.Distance;
 import rental.sim.Offer;
 
-// can I drive a car and drop it at any location on the road?
 class Game {
 	private static final boolean DEBUG = true;
+	private static final double LongDstThreshold = 0.5;
 	Graph graph;
 	int nRelocator = 0;
 	int nCar = 0;
@@ -21,7 +18,6 @@ class Game {
 	Car[] cars;
 	int gid = 0;
 	
-	final int MaxPickupDist = 3;
 	public List<Offer> offers;
 	public LinkedList<Relocator> offerRelocators;
 	public Offer[] gameOffers;
@@ -74,16 +70,88 @@ class Game {
 	
 	
 	public void doPlacement() {
-		sspPlacement();
-		//highDegreePlacement();
+		//sspPlacement();
+		goodPlacement();
 	}
 	
-	// Rank nodes by their degrees
-	private void highDegreePlacement() {
-		// Optimize initial placement to account for
-		// clustered cars.
+		
+	// a good placement should consider
+	// 1. #empty cars @ destination
+	// 2. #degree of destination (important/hub)
+	// 3. path distance
+	private void goodPlacement() {
+		// First rank by 2
+		// Then rank by 1
+		// Finally refine by 3
+		
+		relocators = new Relocator[nRelocator];		
+		int[] degrees = new int[graph.nodeCount()];
+		int[] carCount = new int[graph.nodeCount()];
+		for (Car car : cars) {			
+			int source = car.source;
+			carCount[source]++;
+			if (degrees[car.destination] != 0)
+				degrees[car.destination] = graph.degreeOf(car.destination);
+		}
+		
+		List<CarScore> carScores = new ArrayList<CarScore>(nCar);
+		for (Car car : cars) {
+			carScores.add(new CarScore(car.cid, degrees[car.destination], carCount[car.destination], 
+					graph.getPaths()[car.source][car.destination].dist));
+		}
+		Collections.sort(carScores);
+		
+		// Pick nRelocator number of cars
+		int assigned = 0;
+		double threshold = LongDstThreshold;
+		while (assigned < nRelocator) {			
+			for (int i = 0; i < nCar && assigned < nRelocator; i++) {
+				int carId = carScores.get(i).cid;
+				if (cars[carId].isInuse())
+					continue;				
+				int dst = carScores.get(i).pathDistance;				
+				
+				// refine by criteria 3, if the initial distance is too long, postpone that car
+				if (dst < threshold * Graph.MAP_MAX_DISTANCE) {					
+					relocators[assigned] = new Relocator(assigned, cars[carId].source);
+					relocators[assigned].assignCar(cars[carId]);
+					cars[carId].assignDriver(relocators[assigned]);
+					assigned++;
+				}							
+			}
+			// after each round, release the constraint of criteria 3
+			threshold += 0.1;			
+		}
 	}
 	
+
+	
+	private class CarScore implements Comparable<CarScore> {
+		private int cid;
+		private int dstDegree;
+		private int dstCarCount;
+		private int pathDistance;
+		
+		public CarScore(int cid, int dstDegree, int dstCarCount, int pathDistance) {
+			this.cid = cid;
+			this.dstDegree = dstDegree;
+			this.dstCarCount = dstCarCount;
+			this.pathDistance = pathDistance;
+		}
+
+		@Override
+		public int compareTo(CarScore otherCar) {
+			if (this.dstDegree > otherCar.dstDegree)
+				return 1;
+			else if (this.dstDegree < otherCar.dstDegree)
+				return -1;
+			if (this.dstCarCount > otherCar.dstCarCount)
+				return 1;
+			else if (this.dstCarCount < otherCar.dstCarCount)
+				return -1;
+			return 0;
+		}
+	}
 	
 	// Rank cars by Shortest Path Distance
 	private void sspPlacement() {
