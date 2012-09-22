@@ -5,20 +5,20 @@ import java.util.List;
 import java.util.Stack;
 
 class Relocator {
-	public enum RelocatorStatus {		
-		ENROUTE, // the driver heading to his destination with no passenger
-		IDLING, // the driver who has a car available at the destination
-		WAITING, // a relocator who is waiting for a pick up		
-		PASSENGER, // a relocator in another driver's car to the next available car
-		PICKUP, // a relocator who is rerouting to pick another relocator
-		DROPOFF, // a relocator who carry other relocators
-		INVALID
-	}
-		
+//	public enum RelocatorStatus {		
+//		ENROUTE, // the driver heading to his destination with no passenger
+//		IDLING, // the driver who has a car available at the destination
+//		WAITING, // a relocator who is waiting for a pick up		
+//		PASSENGER, // a relocator in another driver's car to the next available car
+//		PICKUP, // a relocator who is rerouting to pick another relocator
+//		DROPOFF, // a relocator who carry other relocators
+//		INVALID
+//	}
+//		
 	int rid;
 	private int lastLocation;
 	private int location;
-	RelocatorStatus status;
+//	RelocatorStatus status;
 	Car car = null;
 	Relocator pickuper = null;	
 	private boolean scheduled;
@@ -33,19 +33,19 @@ class Relocator {
 	public int baseDestination;
 	private int chainCar = -1;
 	
-	public Relocator(int id, RelocatorStatus s, int loc) {
+	public Relocator(int id, /*RelocatorStatus s, */int loc) {
 		rid = id;
-		status = s;
+//		status = s;
 		location = loc;
 		lastLocation = loc;
 	}
 	
-	public RelocatorStatus getStatus() {
-		return status;
-	}
-	public void setStatus(RelocatorStatus status) {
-		this.status = status;
-	}
+//	public RelocatorStatus getStatus() {
+//		return status;
+//	}
+//	public void setStatus(RelocatorStatus status) {
+//		this.status = status;
+//	}
 	public int getLocation() {
 		return location;
 	}
@@ -63,8 +63,7 @@ class Relocator {
 		return routes;
 	}
 	
-	public void move(RelocatorStatus nextStatus, int nextLoc) {
-		this.status = nextStatus;
+	public void move(/*RelocatorStatus nextStatus, */int nextLoc) {
 		setLocation(nextLoc);
 		this.scheduled = true;
 	}

@@ -46,64 +46,10 @@ public class Player extends rental.sim.Player {
 			throws Exception {
 		// initialize the game
 		game = initializeGame(nrel, carLocations, carDestinations, edges, totalTurns);
-		
-		// TODO: Jiacheng - Optimize initial placement to account for
-		// clustered cars.
-		
-		// place relocators
-		// If we have enough relocators for every car
-		// just return those locations
-		
-		Relocator[] relocators = new Relocator[nrel];
-		String[] startingNodes = new String[nrel];
-		if(nrel >= carLocations.length) {
-			// Note: Some locations may have more than one relocator
-			// or extra relocators are distributed to location 0
-
-			for (int i = 0; i < game.nCar; i++) {
-				relocators[i] = new Relocator(i, Relocator.RelocatorStatus.ENROUTE, game.graph.getNodeId(carLocations[i]));
-				relocators[i].assignCar(game.cars[i]);
-				game.cars[i].assignDriver(relocators[i]);
-				startingNodes[i] = carLocations[i];				
-			}								
-			for (int i = game.nCar; i < nrel; i++) {
-				relocators[i] = new Relocator(i, Relocator.RelocatorStatus.WAITING, 0);
-				startingNodes[i] = game.graph.getNodeName(0);
-			}			
-		}
-		else {
-			// traverse car locations & desinations and
-			List<Graph.Distance> distances = new ArrayList<Graph.Distance>(game.nCar);
-			Graph.Distance distance;
-			int dist;
-			
-			// Find all the distances from S -> D
-			for(int i = 0; i < game.nCar; i++) {
-				int sourceId = game.graph.getNodeId(carLocations[i]);
-				int destId = game.graph.getNodeId(carDestinations[i]);				
-				dist = game.graph.getPaths()[sourceId][destId].dist;				
-				distance = game.graph.new Distance(i, dist);
-				distances.add(distance);
-			}
-			
-			// Sort them by distance
-			Collections.sort(distances);
-			
-			// Pick the shortest locations.						
-			for (int i = 0; i < game.nRelocator; i++) {
-				int carId = distances.get(i).carId;
-				int dst = game.cars[carId].destination;
-				startingNodes[i] = carLocations[carId];
-				relocators[i] = new Relocator(i, Relocator.RelocatorStatus.ENROUTE, game.graph.getNodeId(startingNodes[i]));
-				relocators[i].assignCar(game.cars[carId]);
-				game.cars[carId].assignDriver(relocators[i]);
-				assert(relocators[i].getLocation() == game.cars[carId].location);
-			}
-		}
-		
-		// Set relocators in game
-		game.relocators = relocators;
-		return startingNodes;
+				
+		game.doPlacement();
+				
+		return game.getStaringNodes();
 	}
 
 	@Override

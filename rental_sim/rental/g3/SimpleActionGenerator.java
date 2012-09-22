@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Stack;
 
 import rental.g3.Relocator;
-import rental.g3.Relocator.RelocatorStatus;
+//import rental.g3.Relocator.RelocatorStatus;
 import rental.g3.DriveBuilder;
 import rental.sim.Ride;
 import rental.sim.RGid;
@@ -197,7 +197,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 		}
 		
 		nextLoc = game.graph.nextMove(r.getLocation(), r.firstRoute().dst);
-		r.move(RelocatorStatus.ENROUTE, nextLoc);
+		r.move(/*RelocatorStatus.ENROUTE, */nextLoc);
 		r.car.move(nextLoc);
 		
 		if(r.getLastLocation() == r.getLocation()) {
@@ -245,7 +245,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				for(RGid rgid : passengers) {
 					if(rgid.gid == game.gid) {
 						game.relocators[rgid.rid].pickuper = null;
-						game.relocators[rgid.rid].move(RelocatorStatus.ENROUTE, nextLoc);
+						game.relocators[rgid.rid].move(/*RelocatorStatus.ENROUTE,*/ nextLoc);
 					}
 				}
 			}
@@ -326,7 +326,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 	private DriveBuilder genOtherDrive(int i) {
 		Relocator r = game.relocators[i];			
 		assert(r.pickuper == null);
-		r.move(RelocatorStatus.WAITING, r.getLocation());
+		r.move(/*RelocatorStatus.WAITING, */r.getLocation());
 		return null;
 	}
 	
@@ -344,9 +344,9 @@ public class SimpleActionGenerator extends ActionGenerator {
 		game.log("passengerDrive for: " + rid);
 		// follows the driver
 		if (r.pickuper.car.passengers.contains(new RGid(rid, game.gid)))
-			r.move(RelocatorStatus.PASSENGER, r.pickuper.getLocation());		
+			r.move(/*RelocatorStatus.PASSENGER, */r.pickuper.getLocation());		
 		else  // pickuper not here yet
-			r.move(RelocatorStatus.PASSENGER, r.getLocation());		
+			r.move(/*RelocatorStatus.PASSENGER,*/ r.getLocation());		
 		return null;
 	}
 }
