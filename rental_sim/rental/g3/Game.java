@@ -92,13 +92,13 @@ class Game {
 		if( nRelocator >= cars.length) { // if there are more relocators than cars
 			// 	Assign each relocator to a car		
 			for (int i = 0; i < nCar; i++) {
-				relocators[i] = new Relocator(i, /*Relocator.RelocatorStatus.ENROUTE, */cars[i].location);
+				relocators[i] = new Relocator(i, cars[i].location);
 				relocators[i].assignCar(cars[i]);
 				cars[i].assignDriver(relocators[i]);
 			}
 			// Extra relocators are distributed to location 0
 			for (int i = nCar; i < nRelocator; i++) {
-				relocators[i] = new Relocator(i, /*Relocator.RelocatorStatus.WAITING,*/ 0);
+				relocators[i] = new Relocator(i, 0);
 			}			
 		}
 		else {
@@ -121,16 +121,11 @@ class Game {
 			// Pick the shortest locations.						
 			for (int i = 0; i < nRelocator; i++) {
 				int carId = distances.get(i).carId;
-				//int dst = cars[carId].destination;
-				relocators[i] = new Relocator(i,/* Relocator.RelocatorStatus.ENROUTE,*/ cars[carId].source);
+				relocators[i] = new Relocator(i, cars[carId].source);
 				relocators[i].assignCar(cars[carId]);
 				cars[carId].assignDriver(relocators[i]);
-				assert(relocators[i].getLocation() == cars[carId].location);
 			}
 		}
-
-		// Set relocators in game
-		relocators = relocators;	
 	}
 	
 	public String[] getStaringNodes() {		
