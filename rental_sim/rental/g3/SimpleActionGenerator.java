@@ -73,7 +73,8 @@ public class SimpleActionGenerator extends ActionGenerator {
 	private boolean depositOrNot(int nextLoc, Stack<Route> routes) {
 		if (routes.size() > 1)
 			return false;
-		
+			
+		game.log("last dst: " + routes.peek().dst);
 		// if there is empty car there, directly deposit
 		if (nextLoc== routes.peek().dst /* && game.getEmptyCars(dstLoc).size() > 0 */)
 			return true;
@@ -114,64 +115,67 @@ public class SimpleActionGenerator extends ActionGenerator {
 		// 1. continue on track
 		// 2. reroute to pickup new passengers		
 		List<Pickup> pickups = findPickups(r);
-		if (ourPassengers == 0) // Only do 1 passenger.
-		if (pickups.size() > 0) {
-			// Figure out which pickup we want.
-			List<PickupDistance> pickDs = new ArrayList<PickupDistance>(pickups.size());
-			for(Pickup p : pickups) {
-				pickDs.add(
-						new PickupDistance(
-								pickups.indexOf(p), 
-								game.rndist(r.rid, p.pickLoc) + game.nndist(p.pickLoc, p.dropLoc)));
-			}
-			
-			int minSize = Math.min(3 - passengers.size(), pickDs.size());
-			
-			Collections.sort(pickDs);
-			pickDs.subList(0, minSize);
-			Collections.reverse(pickDs);
-			
-			Car car;
-			Relocator otherR;
-			for(int i = 0; i < minSize && ourPassengers < 1; i++) {
-				// pop seats.
-				Pickup pickup = pickups.get(pickDs.get(i).pid);
-				
-				if(!game.relocators[pickup.rid].hasCar()) { // Because he may have already qualified for a better pickup route.
-					car = game.cars[pickup.cid];
-					
-					if(r.baseDestination == pickup.dropLoc && !r.hasChainCar()) {
-						// If the destination of this car happens to be our current destination...
-						// chain it to this car.
-						game.log("Driver: " + r.rid + " is claming car : " + car.cid + " for his chain.");
-						car.assignDriver(r);
-						r.setChainCar(car.cid);
-						continue;
-					} else {
-						otherR = game.relocators[pickup.rid];
-						car.assignDriver(otherR);
-						otherR.assignCar(car);
-						otherR.pickuper = r;
+		if (ourPassengers == 0) { // Only do 1 passenger.
+			if (pickups.size() > 0) {
+				// Figure out which pickup we want.
+				List<PickupDistance> pickDs = new ArrayList<PickupDistance>(pickups.size());
+				for(Pickup p : pickups) {
+					pickDs.add(
+							new PickupDistance(
+									pickups.indexOf(p), 
+									game.rndist(r.rid, p.pickLoc) + game.nndist(p.pickLoc, p.dropLoc)));
+				}
+
+				int minSize = Math.min(3 - passengers.size(), pickDs.size());
+
+				Collections.sort(pickDs);
+				pickDs.subList(0, minSize);
+				Collections.reverse(pickDs);
+
+				Car car;
+				Relocator otherR;
+				for(int i = 0; i < minSize && ourPassengers < 1; i++) {
+					// pop seats.
+					Pickup pickup = pickups.get(pickDs.get(i).pid);
+
+					if(!game.relocators[pickup.rid].hasCar()) { // Because he may have already qualified for a better pickup route.
+						car = game.cars[pickup.cid];
 						
-						game.log("Adding pickup for " + r.rid + ": " + pickup);
-						
-						if(r.firstRoute().dst != pickup.dropLoc) {
-							r.pushRoute(new Route(r.car.cid, pickup.dropLoc, otherR.rid, Route.DROPOFF));
+						// bug fixed by jiacheng
+						// the car may already be assigned as a chain car first						
+						if (car.isInuse()) { 
+							continue;
 						}
-						
-						
-						
-						game.log("Pushed pickup route to: " + game.graph.getNodeName(pickup.pickLoc));
-						r.pushRoute(new Route(r.car.cid, pickup.pickLoc, otherR.rid, Route.PICKUP));
-						
-						ourPassengers++;
+
+						if(r.baseDestination == pickup.dropLoc && !r.hasChainCar()) {
+							// If the destination of this car happens to be our current destination...
+							// chain it to this car.
+							game.log("Driver: " + r.rid + " is claming car : " + car.cid + " for his chain.");
+							car.assignDriver(r);
+							r.setChainCar(car.cid);
+							continue;
+						} else {
+							otherR = game.relocators[pickup.rid];
+							car.assignDriver(otherR);
+							otherR.assignCar(car);
+							otherR.pickuper = r;
+
+							game.log("Adding pickup for " + r.rid + ": " + pickup);
+
+							if(r.firstRoute().dst != pickup.dropLoc) {
+								r.pushRoute(new Route(r.car.cid, pickup.dropLoc, otherR.rid, Route.DROPOFF));
+							}
+
+							game.log("Pushed pickup route to: " + game.graph.getNodeName(pickup.pickLoc));
+							r.pushRoute(new Route(r.car.cid, pickup.pickLoc, otherR.rid, Route.PICKUP));
+
+							ourPassengers++;
+						}
 					}
-					
-					
 				}
 			}
 		}
-		
+
 		// pick up
 		// This goes after because sometimes we pickup in our immediate spot.
 		for (Relocator or : game.relocators) {
@@ -187,27 +191,29 @@ public class SimpleActionGenerator extends ActionGenerator {
 					or.pickuper = null;
 					continue;
 				}
-				
+
 				passengers.add(new RGid(or.rid, game.gid));
 				game.log("Driver: " + r.rid + " We've arrived to pickup:" + or.rid);
 				r.removePickupRoutes(or.rid);
 				game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 			}
 		}
-		
+
 		nextLoc = game.graph.nextMove(r.getLocation(), r.firstRoute().dst);
 		r.move(nextLoc);
 		r.car.move(nextLoc);
-		
-		if(r.getLastLocation() == r.getLocation()) {
+
+		if(r.getLastLocation() == r.getLocation()) {		
 			game.log("Driver: " + r.rid + " was schedule for illegal move.");
+			game.log("Illegal moving car " + r.car.cid);
+			game.log("Driver assigned chain car: " +r.getChainCar());
 		}
-		
+
 		game.log("Driver: "+ r.rid + " going to " + game.graph.getNodeName(nextLoc));
-		
+
 		toDeposit = depositOrNot(nextLoc, r.getRoutes());
-		
-		
+
+
 		if(toDeposit) {
 			// Determine if we're the last available car.
 			// This can happen if all cars are deposited at the same time.
@@ -218,7 +224,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 					break;
 				}
 			}
-			
+
 			List<Car> availCars = new ArrayList<Car>(Arrays.asList(game.cars));
 			for(int i = 0; i < availCars.size();) {
 				if(availCars.get(i).isDeposit()) {
@@ -228,13 +234,17 @@ public class SimpleActionGenerator extends ActionGenerator {
 				}
 			}
 			
-			if(!moreRelocators && !(availCars.size() <= 1)) {
+			// Bug fixed by Jiacheng
+			// If there is another car at the depost location
+			// which is the chain car of this relocator
+			// it should deposit the car at once
+			if(!moreRelocators && !(availCars.size() <= 1) && r.hasChainCar() == false) {								
 				// This is the last relocator with a car so don't deposit.
 				game.log("Driver: " + r.rid + " is last driver so refusing to deposit.");
 				toDeposit = false;
 			}
-			
-			
+
+
 			game.log("Driver: " + r.rid + " will deposit car.");
 			if(passengers.size() > 0) {
 				// this car gets deposited so our passenger sits in it
@@ -254,8 +264,12 @@ public class SimpleActionGenerator extends ActionGenerator {
 		
 		// if the car is deposited, consider assigning him a new car
 		if (toDeposit) {
+			Relocator carDriver = r.car.driver;
+			game.log("the car is driven by " + r.car.driver.rid);
+			game.log("i am " + r.rid);
+			assert(carDriver == r);
 			r.car.deposit();
-			
+						
 			Car emptyCar = null;
 			if(r.hasChainCar()) { // has a car already reserved at location.
 				emptyCar = game.cars[r.getChainCar()];
@@ -273,7 +287,16 @@ public class SimpleActionGenerator extends ActionGenerator {
 				r.assignCar(emptyCar);
 				emptyCar.assignDriver(r);
 			}
-			
+			if (r.hasCar()) {
+				game.log("Driver " + r.rid +  " has car " + r.car.cid + " after deposit.");
+				if (emptyCar != null)
+					game.log("empty car is " + emptyCar.cid);
+				else
+					game.log("no empty car.");
+			}
+			else {
+				game.log("Driver " + r.rid + " doesn't have car after depost");
+			}
 		}		
 		return drive;		
 	}

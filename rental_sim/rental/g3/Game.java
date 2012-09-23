@@ -8,7 +8,7 @@ import rental.sim.Offer;
 
 class Game {
 	private static final boolean DEBUG = true;
-	private static final double LongDstThreshold = 0.5;
+	private static final double LongDstThreshold = 0.3;
 	Graph graph;
 	int nRelocator = 0;
 	int nCar = 0;
@@ -70,8 +70,8 @@ class Game {
 	
 	
 	public void doPlacement() {
-		//sspPlacement();
-		goodPlacement();
+		sspPlacement();
+		//goodPlacement();
 	}
 	
 		
@@ -90,7 +90,7 @@ class Game {
 		for (Car car : cars) {			
 			int source = car.source;
 			carCount[source]++;
-			if (degrees[car.destination] != 0)
+			if (degrees[car.destination] == 0)
 				degrees[car.destination] = graph.degreeOf(car.destination);
 		}
 		
@@ -100,6 +100,7 @@ class Game {
 					graph.getPaths()[car.source][car.destination].dist));
 		}
 		Collections.sort(carScores);
+		Collections.reverse(carScores);
 		
 		// Pick nRelocator number of cars
 		int assigned = 0;
@@ -186,15 +187,59 @@ class Game {
 			// Sort them by distance
 			Collections.sort(distances);
 
-			// Pick the shortest locations.						
-			for (int i = 0; i < nRelocator; i++) {
-				int carId = distances.get(i).carId;
-				relocators[i] = new Relocator(i, cars[carId].source);
-				relocators[i].assignCar(cars[carId]);
-				cars[carId].assignDriver(relocators[i]);
+			boolean considerChain = true;
+			
+			if (!considerChain) {
+				for (int i = 0; i < nRelocator; i++) {
+					int carId = distances.get(i).carId;
+					Car assigning = cars[carId];
+					relocators[i] = new Relocator(i, assigning.source);
+					relocators[i].assignCar(assigning);
+					assigning.assignDriver(relocators[i]);
+				}
+			}
+			else {
+				// Pick nRelocator number of cars
+				// But we want to ensure there is another empty car at
+				// the destination so that there is a chain
+				int assigned = 0;				
+				for (int i = 0; i < nCar && assigned < nRelocator; i++) {
+					int carId = distances.get(i).carId;
+					Car assigning = cars[carId];
+
+					boolean hasChain = false;
+					for (Car car : cars) {
+						if (!car.isInuse() && car.source == assigning.destination) {
+							hasChain = true;
+							break;
+						}						
+					}
+					if (hasChain) {					
+						relocators[assigned] = new Relocator(assigned, assigning.source);
+						relocators[assigned].assignCar(assigning);
+						assigning.assignDriver(relocators[assigned]);
+						assigned++;
+					}
+				}				
+				// if we cannot find enough chains
+				// assign by shortest path distance
+				if (assigned < nRelocator) {		
+					for (int i = 0; i < nCar && assigned < nRelocator; i++) {
+						int carId = distances.get(i).carId;
+						Car assigning = cars[carId];
+						if (!assigning.isInuse()) {			
+							relocators[assigned] = new Relocator(assigned, assigning.source);
+							relocators[assigned].assignCar(assigning);
+							assigning.assignDriver(relocators[assigned]);
+							assigned++;
+						}
+					}		
+				}				
+				assert(assigned == nRelocator);
 			}
 		}
 	}
+	
 	
 	public String[] getStaringNodes() {		
 		assert(turn == 0); // the initial placement should be called before the game starts
