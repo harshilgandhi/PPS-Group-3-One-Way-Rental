@@ -105,7 +105,11 @@ class Relocator {
 	}
 	
 	public boolean isDriving() {
-		return car != null && car.location == location;
+		return car != null && car.getLocation() == location;
+	}
+	
+	public boolean wasDriving() {
+		return car != null && car.getLastLocation() == lastLocation;
 	}
 	
 	public void setChainCar(int cid) {

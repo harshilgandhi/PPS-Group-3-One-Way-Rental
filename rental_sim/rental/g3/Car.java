@@ -10,7 +10,8 @@ class Car {
 	int source;
 	int destination;
 	
-	int location;
+	private int location;
+	private int lastLocation = -1;
 	Relocator driver = null;
 	boolean isDeposit = false;
 	List<RGid> passengers = new ArrayList<RGid>();	
@@ -39,8 +40,14 @@ class Car {
 		return location;
 	}
 	public void setLocation(int location) {
+		this.lastLocation = this.location;
 		this.location = location;
 	}
+	
+	public int getLastLocation() {
+		return lastLocation;
+	}
+	
 	public int getCid() {
 		return cid;
 	}
@@ -60,7 +67,7 @@ class Car {
 	}
 	
 	public void move(int nextLoc) {
-		this.location = nextLoc;
+		setLocation(nextLoc);
 		setScheduled(true);
 	}
 

@@ -70,7 +70,7 @@ public class Player extends rental.sim.Player {
 					rider.pickuper.updatePickupRoute(rider);
 				} else {
 					// If he managed to get to his destination himself.
-					if(rider.getLocation() == rider.car.location) {
+					if(rider.getLocation() == rider.car.getLocation()) {
 						rider.pickuper.removeDropOffRoutes(rider.rid);
 						rider.pickuper.removePickupRoutes(rider.rid);
 						rider.pickuper.removePickup(rider.rid);
@@ -121,10 +121,10 @@ public class Player extends rental.sim.Player {
 					if( offer.group != game.gid && 
 						offer.src == game.graph.getNodeName(r.getLastLocation()) && offer.time == game.turn) {
 						int distToRelocator = game.rrdist(r.rid, r.pickuper.rid);
-						int distToCar = game.rndist(r.rid, r.car.location);
+						int distToCar = game.rndist(r.rid, r.car.getLocation());
 						
 						int offerToRelocator = game.rndist(r.pickuper.rid, game.graph.getNodeId(offer.dst));
-						int offerToCar = game.nndist(r.car.location, game.graph.getNodeId(offer.dst));
+						int offerToCar = game.nndist(r.car.getLocation(), game.graph.getNodeId(offer.dst));
 						
 						if(offerToRelocator < distToRelocator) {
 							game.log("Relocator: " + r.rid + " getting closer to pickup driver.");

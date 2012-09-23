@@ -373,7 +373,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 									!car.isDeposit ) {
 								
 								// Gen pickup
-								pickup = new Pickup(otherR.rid, car.cid, otherR.getLocation(), car.location, driver.rid);
+								pickup = new Pickup(otherR.rid, car.cid, otherR.getLocation(), car.getLocation(), driver.rid);
 								
 								// Gen cost of pickup.
 								pickupDist = new PickupDistance(

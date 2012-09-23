@@ -164,7 +164,7 @@ class Game {
 		if( nRelocator >= cars.length) { // if there are more relocators than cars
 			// 	Assign each relocator to a car		
 			for (int i = 0; i < nCar; i++) {
-				relocators[i] = new Relocator(i, cars[i].location);
+				relocators[i] = new Relocator(i, cars[i].getLocation());
 				relocators[i].assignCar(cars[i]);
 				cars[i].assignDriver(relocators[i]);
 			}
