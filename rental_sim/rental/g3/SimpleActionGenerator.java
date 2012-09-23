@@ -251,7 +251,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				emptyCar.assignDriver(r);
 			}
 			if (r.hasCar()) {
-				game.log("Driver " + r.rid +  " has car " + r.car.cid + " after deposit.");
+				game.log("Driver: " + r.rid +  " has car " + r.car.cid + " after deposit.");
 				if (emptyCar != null)
 					game.log("empty car is " + emptyCar.cid);
 				else

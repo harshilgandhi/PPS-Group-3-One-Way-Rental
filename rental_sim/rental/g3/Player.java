@@ -66,11 +66,13 @@ public class Player extends rental.sim.Player {
 			for(Ride ride : rides) {
 				rider = game.relocators[ride.rid];
 				if(!ride.executed()) {
+					game.log("Offer reneged so reseting driver: " + rider.rid);
 					rider.setLocation(rider.getLastLocation());
 					rider.pickuper.updatePickupRoute(rider);
 				} else {
 					// If he managed to get to his destination himself.
 					if(rider.getLocation() == rider.car.getLocation()) {
+						game.log("Driver: " + rider.rid + " arrive at pickupLoc, removing pickuper.");
 						rider.pickuper.removeDropOffRoutes(rider.rid);
 						rider.pickuper.removePickupRoutes(rider.rid);
 						rider.pickuper.removePickup(rider.rid);
@@ -88,7 +90,11 @@ public class Player extends rental.sim.Player {
 		game.offerRelocators = new LinkedList<Relocator>();
 		
 		for(Relocator r : game.relocators) {
-			if(r.isDriving()) {
+			// Check both since we've already calculated
+			// next move, a relocator may get be one
+			// spot away from dropoff which would appear
+			// like he's driving.
+			if(r.isDriving() && r.wasDriving()) {
 				
 				// We only need to make one offer
 				// and when we accept requests we can then
