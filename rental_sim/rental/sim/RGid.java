@@ -13,7 +13,8 @@ public class RGid {
 
 	public int hashCode()
 	{
-		return rid ^ gid;
+		return (rid * 123456789) ^
+		       (gid * 987654321);
 	}
 
 	public boolean equals(Object obj)
@@ -26,6 +27,6 @@ public class RGid {
 
 	public String toString()
 	{
-		return "" + rid + " (" + gid + ")";
+		return "" + rid + "(" + gid + ")";
 	}
 }

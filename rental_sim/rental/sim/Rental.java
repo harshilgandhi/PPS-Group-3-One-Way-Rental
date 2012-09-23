@@ -53,7 +53,7 @@ public class Rental {
 				List <File> javaFiles = directoryFiles("rental/" + group, ".java");
 				System.err.print("Compiling " + javaFiles.size() + " source files...   ");
 				Iterable<? extends JavaFileObject> units = fileManager.getJavaFileObjectsFromFiles(javaFiles);
-				boolean ok = compiler.getTask(null, fileManager, null, Arrays.asList("-g"), null, units).call();
+				boolean ok = compiler.getTask(null, fileManager, null, null, null, units).call();
 				if (!ok) throw new Exception("compile error");
 				System.err.println("OK");
 				// load class
@@ -162,8 +162,16 @@ public class Rental {
 		return nodes.toArray(new String[0]);
 	}
 
-	// limit turns (useful in case of infinite loops)
-	private static final int turnLimit = 0;
+	// shuffle rides
+	private static void shuffle(Ride[] rides, Random gen)
+	{
+		for (int i = 0 ; i != rides.length ; ++i) {
+			int r = gen.nextInt(rides.length - i) + i;
+			Ride temp = rides[r];
+			rides[r] = rides[i];
+			rides[i] = temp;
+		}
+	}
 
 	// main function
 	// 1st argument is list of players
@@ -186,27 +194,33 @@ public class Rental {
 		// get nodes of map
 		String[] nodes = edgesToNodes(edges);
 		// number of cars
-		int cars = 50;
+		int cars = 1;
 		if (args.length > 2)
 			cars = Integer.parseInt(args[2]);
 		// number of relocators
-		int relocators = 20;
+		int relocators = 1;
 		if (args.length > 3)
 			relocators = Integer.parseInt(args[3]);
 		// turn that score is counted
 		int scoreTurn = 10;
 		if (args.length > 4)
 			scoreTurn = Integer.parseInt(args[4]);
+		// turn limit (for debugging purposes)
+		int turnLimit = 0;
+		if (args.length > 5)
+			turnLimit = Integer.parseInt(args[5]);
 		// print game info
-		System.err.println("\n #### Info ####\n");
+		System.err.println("\n### Information ###\n");
 		System.err.println("Nodes: " + nodes.length);
 		System.err.println("Edges: " + edges.length);
 		System.err.println("Groups: " + players.length);
 		System.err.println("Cars / group: " + cars);
 		System.err.println("Relocators / group: " + relocators);
 		System.err.println("Score turn: " + scoreTurn);
+		if (turnLimit > 0)
+			System.err.println("Turn limit: " + turnLimit);
 		// play the game
-		int[][] score = play(players, edges, cars, relocators, scoreTurn);	
+		int[][] score = play(players, edges, cars, relocators, scoreTurn, turnLimit);	
 		int[] turnScore = score[0];
 		int[] finalScore = score[1];
 		// print game results
@@ -226,7 +240,7 @@ public class Rental {
 	// play the game and return the score
 	private static int[][] play(Player[] groups, Edge[] edgesArr,
 	                            int carsPerGroup, int relsPerGroup,
-	                            int scoreTurn) throws Exception
+	                            int scoreTurn, int turnLimit) throws Exception
 	{
 		// keep cars and relocators by id
 		String[][] carDestination = new String[groups.length][carsPerGroup];
@@ -300,12 +314,13 @@ public class Rental {
 			}
 			// get offers and accumulate in a single array
 			int totalOffers = 0;
+			Offer[][] offerArr = new Offer [groups.length][];
 			List <Offer> offerList = new LinkedList <Offer> ();
 			for (int group = 0 ; group != groups.length ; ++group)
 				if (toDepositPerGroup[group] != 0) {
-					Offer[] curOffers = groups[group].offer();
-					for (int i = 0 ; i != curOffers.length ; ++i)
-						offerList.add(curOffers[i]);
+					offerArr[group] = groups[group].offer();
+					for (int i = 0 ; i != offerArr[group].length ; ++i)
+						offerList.add(offerArr[group][i]);
 				}
 			Offer[] offers = offerList.toArray(new Offer[0]);
 			// ask for replies in the offers
@@ -332,21 +347,42 @@ public class Rental {
 			}
 			// ask for players to post drive and ride commands
 			Drive[][] allDrives = new Drive[groups.length][];
-			List <Ride> allRides = new LinkedList <Ride> ();
+			Vector <Ride> allRides = new Vector <Ride> ();
+			HashSet <RGid> relocatorUsed = new HashSet <RGid> ();
 			for (int group = 0 ; group != groups.length ; ++group) {
 				if (toDepositPerGroup[group] == 0) continue;
 				Player.DriveRide pair = groups[group].action();
 				Drive[] drives = pair.drive;
 				Ride[] rides = pair.ride;
+				// set self group
+				for (Drive drive : drives)
+					drive.group = group;
+				for (Ride ride : rides)
+					ride.gid = group;
+				// count own passengers
+				int[] count = new int [drives.length];
+				Arrays.fill(count, 0);
+				// print offers
+				System.err.println("### Group " + groups[group].name() + " (" + group + ") ###");
+				System.err.println("  Offers:");
+				for (Offer offer : offerArr[group])
+					System.err.println("    " + offer.toStringSim());
+				// print drives
+				System.err.println("  Drives:");
+				for (Drive drive : drives)
+					System.err.println("    " + drive.toStringSim());
+				// print rides
+				System.err.println("  Rides:");
+				for (Ride ride : rides)
+					System.err.println("    " + ride.toStringSim());
+				System.err.println("");
 				// check sanity of drive actions
-				HashSet <RGid> relocatorUsed = new HashSet <RGid> ();
 				HashSet <Integer> carUsed = new HashSet <Integer> ();
 				for (int i = 0 ; i != drives.length ; ++i) {
 					int car = drives[i].car;
-					Integer Icar = new Integer(car);
-					if (carUsed.contains(Icar))
+					if (carUsed.contains(car))
 						throw new Exception("Car already used");
-					carUsed.add(Icar);
+					carUsed.add(car);
 					int driver = drives[i].driver;
 					if (driver < 0 || driver >= relsPerGroup)
 						throw new Exception("Driver invalid");
@@ -372,9 +408,8 @@ public class Rental {
 						relocatorUsed.add(rgid);
 						if (!relocatorLocation[group][rgid.rid].equals(relocatorLocation[group][driver]))
 							throw new Exception("Relocator of owner group is in the same location with car and driver");
-						if (drives[i].taken == 3)
+						if (count[i]++ >= 3)
 							throw new Exception("Relocators of owner group exceed car capacity");
-						drives[i].taken++;
 					}
 				}
 				allDrives[group] = drives;
@@ -392,61 +427,99 @@ public class Rental {
 						throw new Exception("Invalid company to provide ride");
 					if (group == carOwnerGroup)
 						throw new Exception("Rides must not be specified for own company");
-					String source = relocatorLocation[group][rid];
-					if (!edges.contains(new Edge(source, rides[i].destination)))
-						throw new Exception("Invalid source or destination for ride");
+					Edge edge = new Edge(relocatorLocation[group][rid], rides[i].destination);
+					if (!edges.contains(edge))
+						throw new Exception("Invalid source or destination for ride: " + edge);
 				}
 			}
-			// count and move
-			HashSet <RGid> rideDone = new HashSet <RGid> ();
-			for (int group = 0 ; group != groups.length ; ++group) {
-				if (toDepositPerGroup[group] == 0) continue;
+			// set finished groups
+			Drive[] empty = new Drive[0];
+			for (int group = 0 ; group != groups.length ; ++group)
+				if (toDepositPerGroup[group] == 0)
+					allDrives[group] = empty;
+			// move cars
+			for (int group = 0 ; group != groups.length ; ++group)
 				for (Drive drive : allDrives[group]) {
+					drive.source = carLocation[group][drive.car];
 					// move car and driver
-					System.err.print("Car: " + drive.car + " (" + group + "): " + carLocation[group][drive.car] + " -> " + drive.destination);
-					if (drive.deposit) System.err.println(" {d}");
-					else System.err.println("");
 					carLocation[group][drive.car] = drive.destination;
 					relocatorLocation[group][drive.driver] = drive.destination;
 					RGid drgid = new RGid(drive.driver, group);
-					System.err.print(" Driver: " + drive.driver + " (" + group + ")");
 					// check if deposit
 					if (carDestination[group][drive.car].equals(drive.destination) && drive.deposit) {
-						System.err.println(" deposit!");
 						carLocation[group][drive.car] = null;
 						toDeposit--;
 						if (--toDepositPerGroup[group] == 0)
 							finalScore[group] = turn;
-					} else System.err.println("");
-					// move own passengers
-					for (RGid rgid : drive.passengers) {
-						if (rgid.gid != group) continue;
-						relocatorLocation[group][rgid.rid] = drive.destination;
-						System.err.println(" Own passenger: " + rgid.rid + " (" + rgid.gid + ")");
 					}
-					// check for rides of other companies	
-					for (Ride ride : allRides) {
-						// skip completed rides
-						if (ride.executed) continue;
-						// stop when car is full
-						if (drive.taken == 3) break;
-						for (RGid rgid : drive.passengers)
-							// check all requirements for other company passenger
-							if (rgid.rid == ride.rid && rgid.gid == ride.gid && ride.company == group &&
-							    ride.destination.equals(drive.destination) && !rideDone.contains(rgid)) {
-								// ride is not completed
-								ride.executed = true;
-								rideDone.add(rgid);
-								drive.taken++;
-								System.err.println(" Non-own passenger: " + rgid.rid + " (" + rgid.gid + ")");
-								break;
+					// move own passengers
+					for (RGid rgid : drive.passengers)
+						if (rgid.gid == group) {
+							relocatorLocation[group][rgid.rid] = drive.destination;
+							drive.movedPassengers.add(rgid);
+						}
+				}
+			// create drive map
+			HashMap <Edge, HashMap <Integer, ArrayList <Drive>>> driveMap = new HashMap <Edge, HashMap <Integer, ArrayList <Drive>>> ();
+			for (int group = 0 ; group != groups.length ; ++group)
+				for (Drive drive : allDrives[group])
+					// add in edge map
+					if (drive.movedPassengers.size() < 3) {
+						Edge edge = new Edge(drive.source, drive.destination);
+						if (!driveMap.containsKey(edge))
+							driveMap.put(edge, new HashMap <Integer, ArrayList <Drive>> ());
+						if (!driveMap.get(edge).containsKey(group))
+							driveMap.get(edge).put(group, new ArrayList <Drive> ());
+						driveMap.get(edge).get(group).add(drive);
+					}
+			// check rides
+			Ride[] rides = allRides.toArray(new Ride[0]);
+			shuffle(rides, gen);
+			for (Ride ride : rides) {
+				Edge edge = new Edge(relocatorLocation[ride.gid][ride.rid], ride.destination);
+				// number of possible drives
+				if (driveMap.get(edge) != null && driveMap.get(edge).get(ride.company) != null) {
+					ArrayList <Drive> list = driveMap.get(edge).get(ride.company);
+					ArrayList <Integer> okList = new ArrayList <Integer> ();
+					// check passenger lists
+					RGid rgid = new RGid(ride.rid, ride.gid);
+					for (int i = 0 ; i != list.size() ; ++i)
+						if (list.get(i).passengers.contains(rgid))
+							okList.add(i);
+					if (!okList.isEmpty()) {
+						// pick a random element from the ok list
+						int index = okList.get(gen.nextInt(okList.size()));
+						Drive drive = list.get(index);
+						// remove drive if full
+						drive.movedPassengers.add(rgid);
+						if (drive.movedPassengers.size() >= 3) {
+							list.remove(index);
+							if (list.isEmpty()) {
+								driveMap.get(edge).remove(ride.company);
+								if (driveMap.get(edge).isEmpty())
+									driveMap.remove(edge);
 							}
+						}
+						// modify location and set accepted
+						relocatorLocation[ride.gid][ride.rid] = ride.destination;
+						ride.executed = true;
 					}
 				}
-			}
-			// open rides for reading
-			for (Ride ride : allRides)
 				ride.waiting = false;
+			}
+			// print info
+			for (int group = 0 ; group != groups.length ; ++group)
+				for (Drive drive : allDrives[group]) {
+					System.err.println("Car " + drive.car + " (" + drive.group + ") " + drive.source + " -> " + drive.destination);
+					System.err.println("  Driver " + drive.driver + " (" + drive.group + ")");
+					for (RGid rgid : drive.movedPassengers)
+						if (rgid.gid == drive.group)
+							System.err.println("  Own Passenger " + rgid.rid + " (" + rgid.gid + ")");
+						else
+							System.err.println("  Non-Own Passenger " + rgid.rid + " (" + rgid.gid + ")");
+					if (carDestination[drive.group][drive.car].equals(drive.destination))
+						System.err.println("    !!! Deposit !!!");
+				}
 			// copy turn score
 			if (turn == scoreTurn) {
 				turnScore = new int [groups.length];

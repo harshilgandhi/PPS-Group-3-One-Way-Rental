@@ -79,8 +79,7 @@ public class Offer {
 	{
 		if (verify != null) return;
 		verify = new boolean [rgidSet.size()];
-		for (int i = 0 ; i != verify.length ; ++i)
-			verify[i] = false;
+		Arrays.fill(verify, false);
 	}
 
 	// get access to verifications posted by owner of the offer
@@ -91,8 +90,13 @@ public class Offer {
 		return Arrays.copyOf(verify, verify.length);
 	}
 
-	public String toString()
+	// print offer info
+	String toStringSim()
 	{
-		return "" + group + ": "  + src + " -> " + dst + " [" + time + "]";
+		StringBuffer buf = new StringBuffer(src + " -> " + dst + " @ " + time + ": ");
+		RGid[] request = rgidArr.toArray(new RGid[0]);
+		for (int i = 0 ; i != request.length ; ++i)
+			buf.append(" " + request[i] + (verify[i] ? "Y" : "N"));
+		return buf.toString();
 	}
 }

@@ -1,7 +1,6 @@
 package rental.g3;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +17,7 @@ public class Player extends rental.sim.Player {
 	// We can keep all the information about the game into this structure
 	private Game game;
 	private DriveBuilder[] driveBuilds;
+	private List<Ride> rides;
  	
 	public String name()
 	{
@@ -60,7 +60,26 @@ public class Player extends rental.sim.Player {
 	@Override
 	public Offer[] offer() throws Exception {
 		game.turn++;
-			
+		
+		Relocator rider;
+		if(rides != null) {
+			for(Ride ride : rides) {
+				rider = game.relocators[ride.rid];
+				if(!ride.executed()) {
+					rider.setLocation(rider.getLastLocation());
+					rider.pickuper.updatePickupRoute(rider);
+				} else {
+					// If he managed to get to his destination himself.
+					if(rider.getLocation() == rider.car.location) {
+						rider.pickuper.removeDropOffRoutes(rider.rid);
+						rider.pickuper.removePickupRoutes(rider.rid);
+						rider.pickuper.removePickup(rider.rid);
+						rider.pickuper = null;
+					}
+				}
+			}
+		}
+		
 		// Calculate the moves for this turn.
 		this.driveBuilds = generateDriveRide();
 		
@@ -107,7 +126,10 @@ public class Player extends rental.sim.Player {
 						int offerToRelocator = game.rndist(r.pickuper.rid, game.graph.getNodeId(offer.dst));
 						int offerToCar = game.nndist(r.car.location, game.graph.getNodeId(offer.dst));
 						
-						if(offerToRelocator < distToRelocator || offerToCar < distToCar) {
+						if(offerToRelocator < distToRelocator) {
+							game.log("Relocator: " + r.rid + " getting closer to pickup driver.");
+							offer.request(r.rid, Player.this);
+						} else if(offerToCar < distToCar) {
 							offer.request(r.rid, Player.this);
 						}
 					}
@@ -162,10 +184,11 @@ public class Player extends rental.sim.Player {
 			Graph.PICKUP_DISTANCE = Graph.MAP_MAX_DISTANCE;
 		}
 		
-		List<Ride> rides = new ArrayList<Ride>();
+		rides = new ArrayList<Ride>();
 		Set<Integer> relocatorsRiding = new HashSet<Integer>();
 		RGid rgid = null;
 		
+		Ride ride = null;
 		for(Offer offer: game.gameOffers) {
 			for(int i = 0; i < offer.requests().length; i++) {
 				rgid = offer.requests()[i];
@@ -176,8 +199,15 @@ public class Player extends rental.sim.Player {
 					offer.verifications()[i] // Request accepted
 							) {
 					game.log("Driver: " + rgid.rid + " making ride for accepted offer to: " + offer.dst);
-					rides.add(new Ride(rgid.rid,offer.group,offer.dst));
+					
+					ride = new Ride(rgid.rid,offer.group,offer.dst);
+					rides.add(ride);
 					relocatorsRiding.add(rgid.rid);
+					
+					Relocator r = game.relocators[rgid.rid];
+					r.setLocation(game.graph.getNodeId(offer.dst));
+					r.pickuper.updatePickupRoute(r);
+					
 					continue;
 				}
 			}

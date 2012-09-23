@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import rental.sim.Offer;
+import rental.sim.Ride;
 
 class Game {
 	private static final boolean DEBUG = true;

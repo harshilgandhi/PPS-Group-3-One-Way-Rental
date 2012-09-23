@@ -208,6 +208,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 
 
 			game.log("Driver: " + r.rid + " will deposit car.");
+			r.pickups.clear();
 			if(passengers.size() > 0) {
 				// this car gets deposited so our passenger sits in it
 				// and is no longer updated since we use the pickup relocator

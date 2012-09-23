@@ -30,4 +30,9 @@ public class Edge {
 		return e.source.equals(source) &&
 		       e.destination.equals(destination);
 	}
+
+	public String toString()
+	{
+		return source + " -> " + destination;
+	}
 }
