@@ -9,6 +9,8 @@ import rental.sim.Offer;
 class Game {
 	private static final boolean DEBUG = true;
 	private static final double LongDstThreshold = 0.3;
+	public static final int MAX_PASSENGERS = 1;
+	
 	Graph graph;
 	int nRelocator = 0;
 	int nCar = 0;

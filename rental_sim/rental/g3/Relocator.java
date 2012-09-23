@@ -11,6 +11,7 @@ class Relocator {
 	Car car = null;
 	Relocator pickuper = null;	
 	private boolean scheduled;
+	List<Pickup> pickups = new ArrayList<Pickup>(Game.MAX_PASSENGERS);
 	
 	// Aux Structure:	
 	// for enrouting relocator
@@ -117,5 +118,20 @@ class Relocator {
 	
 	public int getChainCar() {
 		return this.chainCar;
+	}
+
+	public void removePickup(int rid) {
+		Pickup removal = null;
+		for(Pickup pickup : pickups) {
+			if(pickup.passengerRid == rid) {
+				removal = pickup;
+				break;
+			}
+		}
+		
+		if(removal != null) {
+			pickups.remove(removal);
+		}
+		
 	}
 }

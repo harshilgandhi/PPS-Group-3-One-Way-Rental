@@ -3,52 +3,71 @@ package rental.g3;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
 import rental.g3.Relocator;
 import rental.g3.DriveBuilder;
-import rental.sim.Ride;
 import rental.sim.RGid;
-import rental.sim.Player.DriveRide;
 
 public class SimpleActionGenerator extends ActionGenerator {
 	public SimpleActionGenerator(Game game) { super(game); }
+	
+	private Stack<Relocator> drivingRelocators = new Stack<Relocator>();
 
 	@Override
 	public DriveBuilder[] genDriveRide() {
 		List<DriveBuilder> drives = new ArrayList<DriveBuilder>();
 		DriveBuilder drive;
+		
+		// Calculate pickups for all relocators.
+		assignPickups(false);
 			
 		// Three Passes
-		// Pass 1: first schedule those relocators that are going to drive in this round		
+		// Pass 1: first schedule those relocators that are going to drive in this round
+		Relocator r;
 		for (int i = 0; i < game.nRelocator;  i++) {
-			// skip scheduled relocators and those have don't have cars	
-			if (game.relocators[i].isScheduled() || !game.relocators[i].isDriving()) 
-				continue;				
+			// skip scheduled relocators and those have don't have cars
+			r = game.relocators[i];
+			if (r.isScheduled() || !r.isDriving() || r.pickuper != null) 
+				continue;	
 			
-			RGid rgid = new RGid(i, game.gid);
+			drivingRelocators.push(r);
+		}
+		
+		while(drivingRelocators.size() > 0) {
+			r = drivingRelocators.pop();
+			RGid rgid = new RGid(r.rid, game.gid);
 			for(Car car : game.cars) {
 				if( car.passengers.contains(rgid)) {
-					game.log("Passenger: " + i + " is now driving...");
+					game.log("Passenger: " + r.rid + " is now driving...");
 					car.passengers.remove(rgid);
 					
-					if(game.relocators[i].pickuper != null) {
-						game.relocators[i].pickuper.removeDropOffRoutes(i);
-						game.relocators[i].pickuper = null;
+					if(r.pickuper != null) {
+						r.pickuper.removeDropOffRoutes(r.rid);
+						r.pickuper.removePickup(r.rid);
+						r.pickuper = null;
 						game.log("... Removing as passenger from: " + car.driver.rid);
 					}
 				}
 			}
 			
-			drive = genDriverDrive(i);	
-			assert(drive!=null);		
-			drives.add(drive);
-		}		
+			drive = genDriverDrive(r.rid);	
+			
+			if(drive == null) {
+				game.log("Returned null drive.");
+			} else {
+				drives.add(drive);
+			}
+		}
+		
+		
+		
 		// Pass 2: schedule passengers
 		for (int i = 0; i < game.nRelocator; i++) {
 			if (game.relocators[i].isScheduled() || !game.relocators[i].hasCar())
-				continue;			
+				continue;
 			drive = genPassengerDrive(i);
 			if (drive!=null)
 				drives.add(drive);
@@ -99,83 +118,13 @@ public class SimpleActionGenerator extends ActionGenerator {
 					dropoffs.add(passenger);
 					game.relocators[passenger.rid].pickuper = null; // reset pickuper
 					r.removeDropOffRoutes(otherR.rid);
+					r.removePickup(otherR.rid);
 					game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 				}
 			}			
 		}
 		passengers.removeAll(dropoffs);		
 		
-		int ourPassengers = 0;
-		for(Relocator otherR : game.relocators) {
-			if(otherR.pickuper == r) {
-				ourPassengers++;
-			}
-		}
-		// a driver has two options
-		// 1. continue on track
-		// 2. reroute to pickup new passengers		
-		List<Pickup> pickups = findPickups(r);
-		if (ourPassengers == 0) { // Only do 1 passenger.
-			if (pickups.size() > 0) {
-				// Figure out which pickup we want.
-				List<PickupDistance> pickDs = new ArrayList<PickupDistance>(pickups.size());
-				for(Pickup p : pickups) {
-					pickDs.add(
-							new PickupDistance(
-									pickups.indexOf(p), 
-									game.rndist(r.rid, p.pickLoc) + game.nndist(p.pickLoc, p.dropLoc)));
-				}
-
-				int minSize = Math.min(3 - passengers.size(), pickDs.size());
-
-				Collections.sort(pickDs);
-				pickDs.subList(0, minSize);
-				Collections.reverse(pickDs);
-
-				Car car;
-				Relocator otherR;
-				for(int i = 0; i < minSize && ourPassengers < 1; i++) {
-					// pop seats.
-					Pickup pickup = pickups.get(pickDs.get(i).pid);
-
-					if(!game.relocators[pickup.rid].hasCar()) { // Because he may have already qualified for a better pickup route.
-						car = game.cars[pickup.cid];
-						
-						// bug fixed by jiacheng
-						// the car may already be assigned as a chain car first						
-						if (car.isInuse()) { 
-							continue;
-						}
-
-						if(r.baseDestination == pickup.dropLoc && !r.hasChainCar()) {
-							// If the destination of this car happens to be our current destination...
-							// chain it to this car.
-							game.log("Driver: " + r.rid + " is claming car : " + car.cid + " for his chain.");
-							car.assignDriver(r);
-							r.setChainCar(car.cid);
-							continue;
-						} else {
-							otherR = game.relocators[pickup.rid];
-							car.assignDriver(otherR);
-							otherR.assignCar(car);
-							otherR.pickuper = r;
-
-							game.log("Adding pickup for " + r.rid + ": " + pickup);
-
-							if(r.firstRoute().dst != pickup.dropLoc) {
-								r.pushRoute(new Route(r.car.cid, pickup.dropLoc, otherR.rid, Route.DROPOFF));
-							}
-
-							game.log("Pushed pickup route to: " + game.graph.getNodeName(pickup.pickLoc));
-							r.pushRoute(new Route(r.car.cid, pickup.pickLoc, otherR.rid, Route.PICKUP));
-
-							ourPassengers++;
-						}
-					}
-				}
-			}
-		}
-
 		// pick up
 		// This goes after because sometimes we pickup in our immediate spot.
 		for (Relocator or : game.relocators) {
@@ -195,6 +144,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				passengers.add(new RGid(or.rid, game.gid));
 				game.log("Driver: " + r.rid + " We've arrived to pickup:" + or.rid);
 				r.removePickupRoutes(or.rid);
+				r.removePickup(r.rid);
 				game.log("Next destination: " + game.graph.getNodeName(r.firstRoute().dst));
 			}
 		}
@@ -206,7 +156,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 		if(r.getLastLocation() == r.getLocation()) {		
 			game.log("Driver: " + r.rid + " was schedule for illegal move.");
 			game.log("Illegal moving car " + r.car.cid);
-			game.log("Driver assigned chain car: " +r.getChainCar());
+			game.log("Driver: " + r.rid + " assigned chain car: " +r.getChainCar());
 		}
 
 		game.log("Driver: "+ r.rid + " going to " + game.graph.getNodeName(nextLoc));
@@ -242,6 +192,18 @@ public class SimpleActionGenerator extends ActionGenerator {
 				// This is the last relocator with a car so don't deposit.
 				game.log("Driver: " + r.rid + " is last driver so refusing to deposit.");
 				toDeposit = false;
+				
+				// Find out if we have a passenger:
+				if(r.car.passengers.size() < 1) {
+					// We have no passengers but there are still cars out.
+					game.log("Driver: " + r.rid + " expanding search radius.");
+					
+					// Assign pickups ignoring map limit.
+					assignPickups(true);
+					drivingRelocators.add(r);
+					r.setLocation(r.getLastLocation());
+					return null;
+				}
 			}
 
 
@@ -315,32 +277,122 @@ public class SimpleActionGenerator extends ActionGenerator {
 		return topick;
 	}
 	
-	private List<Pickup> findPickups(Relocator relocator) {
+	private void assignPickups(boolean ignoreLimit) {
+		List<PickupWrapper> pickupWrappers = findPickups(ignoreLimit);
+		Collections.sort(pickupWrappers);
+		
+		// Pick best pickup combinations.
+		Pickup pickup;
+		Relocator driver;
+		Relocator passenger;
+		Car driverCar;
+		Car pickupCar;
+		for(PickupWrapper pWrap : pickupWrappers) {
+			pickup = pWrap.pickup;
+			passenger = game.relocators[pickup.passengerRid];
+			driver = game.relocators[pickup.driverRid];
+			driverCar = driver.car;
+			pickupCar = game.cars[pickup.pickupingUpCid];
+			
+			int passengers = driver.pickups.size() + driverCar.passengers.size();
+			
+			// Ensure driver and passenger weren't already scheduled.
+			if(passengers < Game.MAX_PASSENGERS && passenger.pickuper == null) {
+				
+				// bug fixed by jiacheng
+				// the car may already be assigned as a chain car first						
+				if (pickupCar.isInuse()) { 
+					continue;
+				}
+
+				if(driver.baseDestination == pickup.dropLoc && !driver.hasChainCar()) {
+					// If the destination of this car happens to be our current destination...
+					// chain it to this car.
+					game.log("Driver: " + driver.rid + " is claming car : " + pickupCar.cid + " for his chain.");
+					pickupCar.assignDriver(driver);
+					driver.setChainCar(pickupCar.cid);
+					continue;
+				} else {
+					passenger = game.relocators[pickup.passengerRid];
+					pickupCar.assignDriver(passenger);
+					passenger.assignCar(pickupCar);
+					passenger.pickuper = driver;
+
+					game.log("Adding pickup for " + driver.rid + ": " + pickup);
+
+					if(driver.firstRoute().dst != pickup.dropLoc) {
+						driver.pushRoute(new Route(driver.car.cid, pickup.dropLoc, passenger.rid, Route.DROPOFF));
+						driver.pushRoute(new Route(driver.car.cid, pickup.pickLoc, passenger.rid, Route.PICKUP));
+					} else {
+						int nextLoc = game.graph.nextMove(driver.getLocation(), driver.firstRoute().dst);
+						// If the pickup location is our destination or our next move. then don't push.
+						if(driver.baseDestination != pickup.pickLoc && nextLoc != pickup.pickLoc) {
+							game.log("Driver: " + driver.rid + " Pushed pickup route to: " + game.graph.getNodeName(pickup.pickLoc));
+							driver.pushRoute(new Route(driver.car.cid, pickup.pickLoc, passenger.rid, Route.PICKUP));
+						}
+					}
+					
+					// Always add pickup so we know if this relocator is already scheduled.
+					driver.pickups.add(pickup);
+				}
+			}
+		}
+	}
+	
+	private List<PickupWrapper> findPickups(boolean ignoreLimit) {
 		
 		// if there is a waiting relocator (!hasCar) within distance d
 		// && is not scheduled a pickup
 		// && there is an available car within distance d from the pickup location
 		
-		List<Pickup> pickups = new ArrayList<Pickup>();
+		List<PickupWrapper> pickups = new LinkedList<PickupWrapper>();
 		
-		for(Relocator otherR : game.relocators) {
+		// This happens before the drives are calculated so use currrent position.
+		Pickup pickup;
+		PickupDistance pickupDist;
+		for(Relocator driver : game.relocators) {
 			
-			// TODO: Optimize pickups until turn limit then relax perimeter to entire map.
-			if( !otherR.hasCar() && 
-				!otherR.isScheduled() &&
-				game.rrdist(otherR.rid, relocator.rid) <= Graph.PICKUP_DISTANCE) {
-				assert(!otherR.isScheduled());
-				
-				for(Car car : game.cars) {
-					if(!car.isInuse() && !car.isDeposit && game.rndist(relocator.rid, car.location) <= Graph.MAP_MAX_DISTANCE) {
-						pickups.add(new Pickup(otherR.rid, car.cid, otherR.getLocation(), car.location));
+			
+			
+			if(		driver.isDriving() &&
+					driver.pickups.size() + driver.car.passengers.size() < Game.MAX_PASSENGERS) {
+				for(Relocator otherR : game.relocators) {
+					
+					// TODO: Optimize pickups until turn limit then relax perimeter to entire map.
+					int maxDistance = (ignoreLimit) ? Graph.MAP_MAX_DISTANCE : Graph.PICKUP_DISTANCE;
+					
+					if( 	!otherR.hasCar() && 
+							!otherR.hasChainCar() &&
+							game.rrdist(otherR.rid, driver.rid) <= maxDistance)  {
+						assert(!otherR.isScheduled());
+						
+						for(Car car : game.cars) {
+							if(		!car.isInuse() && 
+									!car.isDeposit ) {
+								
+								// Gen pickup
+								pickup = new Pickup(otherR.rid, car.cid, otherR.getLocation(), car.location, driver.rid);
+								
+								// Gen cost of pickup.
+								pickupDist = new PickupDistance(
+										pickups.indexOf(pickup), 
+										
+										// 
+										game.rndist(driver.rid, pickup.pickLoc) + 
+										game.nndist(pickup.pickLoc, pickup.dropLoc) +
+										game.nndist(pickup.dropLoc, driver.baseDestination)
+										);
+								
+								pickups.add(new PickupWrapper(pickup, pickupDist));
+							}
+						}
 					}
 				}
 			}
 		}
 		
 		return pickups;
-	}	
+	}
 	
 
 	private DriveBuilder genOtherDrive(int i) {
@@ -360,12 +412,14 @@ public class SimpleActionGenerator extends ActionGenerator {
 			// We were kicked out of car in previous step, so drive!
 			return null;
 		}
-		game.log("passengerDrive for: " + rid);
 		// follows the driver
-		if (r.pickuper.car.passengers.contains(new RGid(rid, game.gid)))
+		if (r.pickuper.car.passengers.contains(new RGid(rid, game.gid))) {
+			game.log("Driver: " + rid + " riding with " + r.pickuper.rid);
 			r.move(r.pickuper.getLocation());		
-		else  // pickuper not here yet
-			r.move(r.getLocation());		
+		} else {  // pickuper not here yet
+			game.log("Driver: " + rid + " waiting for " + r.pickuper.rid);
+			r.move(r.getLocation());
+		}
 		return null;
 	}
 }

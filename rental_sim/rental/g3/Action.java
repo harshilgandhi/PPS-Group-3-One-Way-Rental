@@ -35,6 +35,21 @@ class Route {
 	}
 }
 
+class PickupWrapper implements Comparable<PickupWrapper> {
+	PickupDistance pickupDist;
+	Pickup pickup;
+	
+	public PickupWrapper(Pickup pickup, PickupDistance pickupDist) {
+		this.pickup = pickup;
+		this.pickupDist = pickupDist;
+	}
+
+	@Override
+	public int compareTo(PickupWrapper wrapper) {
+		return pickupDist.compareTo(wrapper.pickupDist);
+	}
+}
+
 class PickupDistance implements Comparable<PickupDistance> {
 	int pid;
 	int distance;
@@ -54,20 +69,23 @@ class PickupDistance implements Comparable<PickupDistance> {
 
 class Pickup {
 	public static final int MaxPickupDist = 3;
-	public Pickup(int rid, int cid, int pick, int drop) {
-		this.rid = rid;
-		this.cid = cid;
-		pickLoc = pick;
-		dropLoc = drop;
-	}
-	int rid;
-	int cid;
+	int driverRid;
+	int passengerRid;
+	int pickupingUpCid;
 	int pickLoc;
 	int dropLoc;
 	
+	public Pickup(int rid, int cid, int pick, int drop, int driver) {
+		this.passengerRid = rid;
+		this.driverRid = driver;
+		this.pickupingUpCid = cid;
+		pickLoc = pick;
+		dropLoc = drop;
+	}
+	
 	@Override
 	public String toString() {
-		return "Pickup[driver:" + rid + ", car:" + cid + "]"; 
+		return "Pickup[driver:" + passengerRid + ", car:" + pickupingUpCid + "]"; 
 	}
 }
 

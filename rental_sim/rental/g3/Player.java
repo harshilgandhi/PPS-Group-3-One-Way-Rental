@@ -40,6 +40,7 @@ public class Player extends rental.sim.Player {
 		
 		// Set pick up distance
 		Graph.PICKUP_DISTANCE = (int)(0.2 * Graph.MAP_MAX_DISTANCE);
+//		Graph.PICKUP_DISTANCE = 1;
 		
 		return game;
 	}
