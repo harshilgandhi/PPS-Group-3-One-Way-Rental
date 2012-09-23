@@ -82,7 +82,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 				drives.add(drive);
 		}
 		if(drives.size() == 0) {
-			throw new RuntimeException("No drive objects but game is not over.");
+			game.log("No drive objects but game is not over.");
 		}
 		
 		return drives.toArray(new DriveBuilder[0]);
@@ -149,6 +149,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 			}
 		}
 
+		int lastLastLocation = r.getLastLocation();
 		nextLoc = game.graph.nextMove(r.getLocation(), r.firstRoute().dst);
 		r.move(nextLoc);
 		r.car.move(nextLoc);
@@ -157,6 +158,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 			game.log("Driver: " + r.rid + " was schedule for illegal move.");
 			game.log("Illegal moving car " + r.car.cid);
 			game.log("Driver: " + r.rid + " assigned chain car: " +r.getChainCar());
+			
 		}
 
 		game.log("Driver: "+ r.rid + " going to " + game.graph.getNodeName(nextLoc));
@@ -200,8 +202,15 @@ public class SimpleActionGenerator extends ActionGenerator {
 					
 					// Assign pickups ignoring map limit.
 					assignPickups(true);
-					drivingRelocators.add(r);
 					r.setLocation(r.getLastLocation());
+					r.car.setLocation(r.getLocation());
+					
+					// If there are available drivers that
+					// arn't doing something else atm.
+					if(r.pickups.size() > 0) {
+						drivingRelocators.add(r);
+					}
+					
 					return null;
 				}
 			}
@@ -228,9 +237,18 @@ public class SimpleActionGenerator extends ActionGenerator {
 		// if the car is deposited, consider assigning him a new car
 		if (toDeposit) {
 			Relocator carDriver = r.car.driver;
-			game.log("the car is driven by " + r.car.driver.rid);
-			game.log("i am " + r.rid);
 			assert(carDriver == r);
+			
+			// Need condition to reset driver if his plans were canceled.
+			// so we don't make an illegal move.
+			if(r.getLocation() == r.getLastLocation()) {
+				game.log("Driver: " + r.rid + " reseating driver to last last position for illegal move.");
+				r.move(lastLastLocation);
+				r.car.move(lastLastLocation);
+				return new DriveBuilder(rid, r.car.cid, false, new RGid[0], game.graph.getNodeName(lastLastLocation));
+			}
+			
+			
 			r.car.deposit();
 						
 			Car emptyCar = null;
