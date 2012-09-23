@@ -364,6 +364,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 					
 					if( 	!otherR.hasCar() && 
 							!otherR.hasChainCar() &&
+							!otherR.isScheduled() && // Driver may be dropping off and this can be ran after gendrive.
 							game.rrdist(otherR.rid, driver.rid) <= maxDistance)  {
 						assert(!otherR.isScheduled());
 						

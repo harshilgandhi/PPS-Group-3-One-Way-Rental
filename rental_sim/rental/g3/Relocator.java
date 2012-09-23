@@ -138,7 +138,7 @@ class Relocator {
 	public void updatePickupRoute(Relocator r) {
 		Route pickupRoute = null;
 		for(Route route : routes) {
-			if(route.forRelocator == r.rid && route.dst == r.getLastLocation()) {
+			if(route.forRelocator == r.rid && route.dst == r.getLastLocation()  && route.type == Route.PICKUP) {
 				pickupRoute = route;
 				break;
 			}
