@@ -328,8 +328,7 @@ public class SimpleActionGenerator extends ActionGenerator {
 			// TODO: Optimize pickups until turn limit then relax perimeter to entire map.
 			if( !otherR.hasCar() && 
 				!otherR.isScheduled() &&
-				game.rrdist(otherR.rid, relocator.rid) <= Graph.MAP_MAX_DISTANCE
-				) {
+				game.rrdist(otherR.rid, relocator.rid) <= Graph.PICKUP_DISTANCE) {
 				assert(!otherR.isScheduled());
 				
 				for(Car car : game.cars) {
@@ -337,7 +336,6 @@ public class SimpleActionGenerator extends ActionGenerator {
 						pickups.add(new Pickup(otherR.rid, car.cid, otherR.getLocation(), car.location));
 					}
 				}
-				
 			}
 		}
 		
@@ -361,7 +359,6 @@ public class SimpleActionGenerator extends ActionGenerator {
 		if(r.pickuper == null || r.pickuper.car == null) {
 			// We were kicked out of car in previous step, so drive!
 			return null;
-//			return genDriverDrive(rid);
 		}
 		game.log("passengerDrive for: " + rid);
 		// follows the driver

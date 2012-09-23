@@ -17,6 +17,7 @@ class Graph {
 	private int[][] adjacency; // adjacency-matrix
 	private Path[][] paths;
 	public static int MAP_MAX_DISTANCE = 1;
+	public static int PICKUP_DISTANCE = 0;
 	
 
 	public Graph(Edge[] edges) {

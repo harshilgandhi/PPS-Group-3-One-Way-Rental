@@ -37,6 +37,10 @@ public class Player extends rental.sim.Player {
 		
 		// create a new game
 		Game game = new Game(this.id, g, ncar, cars, nrel, totalTurns);
+		
+		// Set pick up distance
+		Graph.PICKUP_DISTANCE = (int)(0.2 * Graph.MAP_MAX_DISTANCE);
+		
 		return game;
 	}
 	
@@ -55,7 +59,7 @@ public class Player extends rental.sim.Player {
 	@Override
 	public Offer[] offer() throws Exception {
 		game.turn++;
-		
+			
 		// Calculate the moves for this turn.
 		this.driveBuilds = generateDriveRide();
 		
@@ -152,6 +156,11 @@ public class Player extends rental.sim.Player {
 
 	@Override
 	public DriveRide action() throws Exception {
+		
+		if (game.turn >= game.nTurns) {
+			Graph.PICKUP_DISTANCE = Graph.MAP_MAX_DISTANCE;
+		}
+		
 		List<Ride> rides = new ArrayList<Ride>();
 		Set<Integer> relocatorsRiding = new HashSet<Integer>();
 		RGid rgid = null;

@@ -70,8 +70,8 @@ class Game {
 	
 	
 	public void doPlacement() {
-		sspPlacement();
-		//goodPlacement();
+		//sspPlacement();
+		goodPlacement();
 	}
 	
 		
@@ -80,8 +80,8 @@ class Game {
 	// 2. #degree of destination (important/hub)
 	// 3. path distance
 	private void goodPlacement() {
-		// First rank by 2
-		// Then rank by 1
+		// First rank by 1
+		// Then rank by 2
 		// Finally refine by 3
 		
 		relocators = new Relocator[nRelocator];		
@@ -142,13 +142,13 @@ class Game {
 
 		@Override
 		public int compareTo(CarScore otherCar) {
-			if (this.dstDegree > otherCar.dstDegree)
-				return 1;
-			else if (this.dstDegree < otherCar.dstDegree)
-				return -1;
 			if (this.dstCarCount > otherCar.dstCarCount)
 				return 1;
 			else if (this.dstCarCount < otherCar.dstCarCount)
+				return -1;
+			if (this.dstDegree > otherCar.dstDegree)
+				return 1;
+			else if (this.dstDegree < otherCar.dstDegree)
 				return -1;
 			return 0;
 		}
@@ -187,7 +187,7 @@ class Game {
 			// Sort them by distance
 			Collections.sort(distances);
 
-			boolean considerChain = true;
+			boolean considerChain = false;
 			
 			if (!considerChain) {
 				for (int i = 0; i < nRelocator; i++) {
