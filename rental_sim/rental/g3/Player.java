@@ -1,9 +1,11 @@
 package rental.g3;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -18,10 +20,14 @@ public class Player extends rental.sim.Player {
 	private Game game;
 	private DriveBuilder[] driveBuilds;
 	private List<Ride> rides;
+	
+	private Set<Integer> goodGroups = new HashSet<Integer>();  // Groups that offered a ride.
+	private Set<Integer> greatGroups = new HashSet<Integer>(); // Groups that gave a ride.
+	private Set<Integer> badGroups = new HashSet<Integer>();   // Groups that reneged on ride.
  	
 	public String name()
 	{
-		return "Group 3";
+		return "3 Los Locos";
 	}
 	
 	private Game initializeGame(int nrel, String[] carLocations,
@@ -69,6 +75,13 @@ public class Player extends rental.sim.Player {
 					game.log("Offer reneged so reseting driver: " + rider.rid);
 					rider.setLocation(rider.getLastLocation());
 					rider.pickuper.updatePickupRoute(rider);
+					
+					greatGroups.remove(ride.company);
+					goodGroups.remove(ride.company);
+					if(badGroups.add(ride.company)) {
+						game.log("Group " + ride.company + " reneged on driver adding to bad groups.");
+					}
+					
 				} else {
 					// If he managed to get to his destination himself.
 					if(rider.getLocation() == rider.car.getLocation()) {
@@ -77,6 +90,12 @@ public class Player extends rental.sim.Player {
 						rider.pickuper.removePickupRoutes(rider.rid);
 						rider.pickuper.removePickup(rider.rid);
 						rider.pickuper = null;
+					}
+					
+					goodGroups.remove(ride.company);
+					badGroups.remove(ride.company);
+					if(greatGroups.add(ride.company)) {
+						game.log("Upgrading group " + ride.company + " to great group.");
 					}
 				}
 			}
@@ -119,6 +138,17 @@ public class Player extends rental.sim.Player {
 	@Override
 	public void request(Offer[] offers) throws Exception {
 		this.game.gameOffers = offers;
+		// Group qualification for offers.
+		for(Offer offer : offers) {
+			if(offer.group != game.gid) {
+				if( !badGroups.contains(offer.group) && 
+					!greatGroups.contains(offer.group) && 
+					goodGroups.add(offer.group)) {
+					game.log("Upgraded group: " + offer.group + " to good groups.");
+				}
+			}
+		}
+		
 		for(Relocator r : game.relocators) {
 			if(!r.isDriving() && r.hasCar() && r.pickuper != null) {
 				// relocator is potential candidate.
@@ -148,6 +178,12 @@ public class Player extends rental.sim.Player {
 	public void verify() throws Exception {
 		// Not for monday
 		
+		// Create drive map.
+		Map<Relocator, DriveBuilder> driveMap = new HashMap<Relocator, DriveBuilder>();
+		for(DriveBuilder drive : this.driveBuilds) {
+			driveMap.put(game.relocators[drive.driver], drive);
+		}
+		
 		for ( int i = 0; i < game.offers.size(); i ++)
 		{
 			Relocator r = game.offerRelocators.get(i);
@@ -160,7 +196,30 @@ public class Player extends rental.sim.Player {
 			
 			boolean[] verifyArr = new boolean[rgidArr.length];
 			int aSeats = 3 - r.car.passengers.size();
-			for ( int j = 0; j < Math.min(aSeats, verifyArr.length); j++ )
+			int seatsGiven = 0;
+			
+			RGid rgid;
+			for(int j = 0; j < rgidArr.length && aSeats > 0; j++) {
+				rgid = rgidArr[j];
+				if(greatGroups.contains(rgid.gid) && aSeats > 0) {
+					aSeats--;
+					seatsGiven++;
+					game.log("Gave priority ride to great group:" + rgid);
+					verifyArr[j] = true;
+				}
+			}
+			
+			for(int j = 0; j < rgidArr.length && aSeats > 0; j++) {
+				rgid = rgidArr[j];
+				if(goodGroups.contains(rgid.gid) && aSeats > 0) {
+					aSeats--;
+					seatsGiven++;
+					game.log("Gave priority ride to good group:" + rgid);
+					verifyArr[j] = true;
+				}
+			}
+			
+			for ( int j = 0; j < Math.min(aSeats, verifyArr.length) && seatsGiven < rgidArr.length; j++ )
 			{
 				Random gen = new Random();
 				int index = 0;
@@ -170,12 +229,14 @@ public class Player extends rental.sim.Player {
 				}while(verifyArr[index]==true);
 				
 				verifyArr[index] = true;
-				for(DriveBuilder drive : this.driveBuilds) {
-					if(drive.car == r.car.cid) {
-						drive.passengerSet.add(offer.requests()[index]);
-					}
+			}
+			
+			DriveBuilder drive;
+			for(int j = 0; j < verifyArr.length; j++) {
+				if(verifyArr[j]) {
+					drive = driveMap.get(r);
+					drive.passengerSet.add(rgidArr[j]);
 				}
-				
 			}
 			game.offers.get(i).verify(verifyArr, Player.this);
 		}
