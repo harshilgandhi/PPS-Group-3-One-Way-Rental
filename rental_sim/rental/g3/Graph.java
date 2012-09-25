@@ -10,12 +10,16 @@ import java.util.Set;
 
 import rental.sim.Edge;
 
+/**
+ * Graph contains all the nodes of the given map and shortest 
+ * paths for each node and their adjacencies.
+ */
 class Graph {	
 	private Map<String, Integer> nodeIds;
 	private List<String> nodes;
 	
 	private int[][] adjacency; // adjacency-matrix
-	private Path[][] paths;
+	private Path[][] paths; // shortest paths.
 	public static int MAP_MAX_DISTANCE = 1;
 	public static int PICKUP_DISTANCE = 0;
 	
@@ -25,6 +29,8 @@ class Graph {
 		Set<String> destNeighbor = null;
 		Set<String> sourceNeighbor = null;
 		
+		// Construct set of all nodes in graph.
+		// and building neighbor sets
 		Set<String> nodeSet = new HashSet<String>();
 		for(Edge edge: edges) {
 			nodeSet.add(edge.destination);
@@ -53,7 +59,6 @@ class Graph {
 		// Build adjacency matrix
 		int nodeCount = nodeSet.size();
 		adjacency= new int[nodeCount][nodeCount];
-				
 		for(Edge edge: edges) {
 			int src = getNodeId(edge.source);
 			int dst = getNodeId(edge.destination);
@@ -83,6 +88,7 @@ class Graph {
 	
 	private void shortestPath(Map<String, Set<String>> neighbors) {
 		// Shortest path for Source -> Desination
+		// Using Dijkstra
 		String node = null;
 		Path path = null;
 		Path neighborPath = null;
