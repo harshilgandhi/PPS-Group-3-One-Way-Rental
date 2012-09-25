@@ -219,8 +219,11 @@ public class Player extends rental.sim.Player {
 				}
 			}
 			
-			for ( int j = 0; j < Math.min(aSeats, verifyArr.length) && seatsGiven < rgidArr.length; j++ )
-			{
+			int qualifiedRequests = rgidArr.length;
+			for (   int j = 0;
+					j < Math.min(aSeats, verifyArr.length) && // As long as there are available seats
+					seatsGiven < qualifiedRequests;
+					j++ ) {
 				Random gen = new Random();
 				int index = 0;
 				do
@@ -228,7 +231,12 @@ public class Player extends rental.sim.Player {
 					index = gen.nextInt(verifyArr.length);
 				}while(verifyArr[index]==true);
 				
-				verifyArr[index] = true;
+				if(badGroups.contains(rgidArr[index].gid)) {
+					game.log("Ignoring ride for bad group: " + rgidArr[index].gid);
+					qualifiedRequests--;
+				} else {
+					verifyArr[index] = true;
+				}
 			}
 			
 			DriveBuilder drive;
