@@ -89,8 +89,8 @@ class Game {
 	
 	
 	public void doPlacement() {
-		//sspPlacement();
-		goodPlacement();
+		sspPlacement();
+		//goodPlacement();
 	}
 	
 		
@@ -208,7 +208,7 @@ class Game {
 			// Sort them by distance
 			Collections.sort(distances);
 
-			boolean considerChain = false;
+			boolean considerChain = true;
 			
 			if (!considerChain) {
 				for (int i = 0; i < nRelocator; i++) {
