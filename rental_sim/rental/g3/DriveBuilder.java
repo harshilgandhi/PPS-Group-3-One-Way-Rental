@@ -5,6 +5,11 @@ import java.util.Set;
 import rental.sim.Drive;
 import rental.sim.RGid;
 
+/**
+ * 
+ * Class for building Drive objects since Drives are immutable.
+ *
+ */
 public class DriveBuilder {
 
 	// info

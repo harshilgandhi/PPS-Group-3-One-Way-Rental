@@ -15,6 +15,11 @@ import rental.sim.Offer;
 import rental.sim.RGid;
 import rental.sim.Ride;
 
+/**
+ * 
+ * The Group 3 "Los Locos" Player.
+ *
+ */
 public class Player extends rental.sim.Player {
 	// We can keep all the information about the game into this structure
 	private Game game;
@@ -59,7 +64,7 @@ public class Player extends rental.sim.Player {
 				
 		game.doPlacement();
 				
-		return game.getStaringNodes();
+		return game.getStartingNodes();
 	}
 
 	@Override
@@ -103,7 +108,6 @@ public class Player extends rental.sim.Player {
 		// Calculate the moves for this turn.
 		this.driveBuilds = generateDriveRide();
 		
-		// Not for monday
 		game.offers = new LinkedList<Offer>();
 		game.offerRelocators = new LinkedList<Relocator>();
 		
@@ -175,7 +179,6 @@ public class Player extends rental.sim.Player {
 
 	@Override
 	public void verify() throws Exception {
-		// Not for monday
 		
 		// Create drive map.
 		Map<Relocator, DriveBuilder> driveMap = new HashMap<Relocator, DriveBuilder>();

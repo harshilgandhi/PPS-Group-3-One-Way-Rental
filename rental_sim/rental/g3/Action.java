@@ -1,5 +1,10 @@
 package rental.g3;
 
+/**
+ * 
+ * Describes the destination of the relocator.
+ *
+ */
 class Route {
 	public static final int PICKUP = 1;
 	public static final int DROPOFF = 2;
@@ -35,6 +40,11 @@ class Route {
 	}
 }
 
+/**
+ * 
+ * Wrapper class to sort pickups by their distances added for Global Pickup search.
+ *
+ */
 class PickupWrapper implements Comparable<PickupWrapper> {
 	PickupDistance pickupDist;
 	Pickup pickup;
@@ -50,6 +60,11 @@ class PickupWrapper implements Comparable<PickupWrapper> {
 	}
 }
 
+/**
+ * 
+ * Class describing the pick up and its distance.
+ *
+ */
 class PickupDistance implements Comparable<PickupDistance> {
 	int pid;
 	int distance;
@@ -66,9 +81,12 @@ class PickupDistance implements Comparable<PickupDistance> {
 	}
 }
 
-
+/**
+ * 
+ * Class that describes the pick up.
+ *
+ */
 class Pickup {
-	public static final int MaxPickupDist = 3;
 	int driverRid;
 	int passengerRid;
 	int pickupingUpCid;

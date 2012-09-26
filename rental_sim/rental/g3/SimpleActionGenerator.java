@@ -11,6 +11,11 @@ import rental.g3.Relocator;
 import rental.g3.DriveBuilder;
 import rental.sim.RGid;
 
+/**
+ * 
+ * Generates the Drive objects for the next move. 
+ *
+ */
 public class SimpleActionGenerator extends ActionGenerator {
 	public SimpleActionGenerator(Game game) { super(game); }
 	
@@ -339,6 +344,9 @@ public class SimpleActionGenerator extends ActionGenerator {
 
 					game.log("Adding pickup for " + driver.rid + ": " + pickup);
 
+					/*
+					 *  If the drop location is different than the current destination
+					 */
 					if(driver.firstRoute().dst != pickup.dropLoc) {
 						driver.pushRoute(new Route(driver.car.cid, pickup.dropLoc, passenger.rid, Route.DROPOFF));
 						driver.pushRoute(new Route(driver.car.cid, pickup.pickLoc, passenger.rid, Route.PICKUP));
@@ -360,9 +368,6 @@ public class SimpleActionGenerator extends ActionGenerator {
 	
 	private List<PickupWrapper> findPickups(boolean ignoreLimit) {
 		
-		// if there is a waiting relocator (!hasCar) within distance d
-		// && is not scheduled a pickup
-		// && there is an available car within distance d from the pickup location
 		
 		List<PickupWrapper> pickups = new LinkedList<PickupWrapper>();
 		
@@ -370,34 +375,33 @@ public class SimpleActionGenerator extends ActionGenerator {
 		Pickup pickup;
 		PickupDistance pickupDist;
 		for(Relocator driver : game.relocators) {
-			
-			
-			
+						 
+			// If the driver is driving and he has room for another passenger
 			if(		driver.isDriving() &&
 					driver.pickups.size() + driver.car.passengers.size() < Game.MAX_PASSENGERS) {
 				for(Relocator otherR : game.relocators) {
 					
-					// TODO: Optimize pickups until turn limit then relax perimeter to entire map.
 					int maxDistance = (ignoreLimit) ? Graph.MAP_MAX_DISTANCE : Graph.PICKUP_DISTANCE;
 					
+					//  If other relocator doesn't have a car and
+					//	other relocator doesn't have a chain car and
+					//  the relocator is within the max distance
 					if( 	!otherR.hasCar() && 
 							!otherR.hasChainCar() &&
 							!otherR.isScheduled() && // Driver may be dropping off and this can be ran after gendrive.
 							game.rrdist(otherR.rid, driver.rid) <= maxDistance)  {
-						assert(!otherR.isScheduled());
 						
 						for(Car car : game.cars) {
 							if(		!car.isInuse() && 
 									!car.isDeposit ) {
 								
-								// Gen pickup
+								// Generate pickup
 								pickup = new Pickup(otherR.rid, car.cid, otherR.getLocation(), car.getLocation(), driver.rid);
 								
-								// Gen cost of pickup.
+								// Generate cost of pickup.
 								pickupDist = new PickupDistance(
 										pickups.indexOf(pickup), 
 										
-										// 
 										game.rndist(driver.rid, pickup.pickLoc) + 
 										game.nndist(pickup.pickLoc, pickup.dropLoc) +
 										game.nndist(pickup.dropLoc, driver.baseDestination)
@@ -425,8 +429,6 @@ public class SimpleActionGenerator extends ActionGenerator {
 	// is assigned a car, but not at the car
 	private DriveBuilder genPassengerDrive(int rid) {			
 		Relocator r = game.relocators[rid];	
-		
-		// TODO: Choose pickups optimized from Waiting perspective.
 		
 		if(r.pickuper == null || r.pickuper.car == null) {
 			// We were kicked out of car in previous step, so drive!

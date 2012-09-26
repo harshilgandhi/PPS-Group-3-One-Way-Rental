@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+/**
+ * 
+ * Describes the Relocator object.
+ *
+ */
 class Relocator {
 	int rid;
 	private int lastLocation;
@@ -11,14 +16,8 @@ class Relocator {
 	Car car = null;
 	Relocator pickuper = null;	
 	private boolean scheduled;
-	List<Pickup> pickups = new ArrayList<Pickup>(Game.MAX_PASSENGERS);
-	
-	// Aux Structure:	
-	// for enrouting relocator
-	//private Route route;			
+	List<Pickup> pickups = new ArrayList<Pickup>(Game.MAX_PASSENGERS);			
 	private Stack<Route> routes = new Stack<Route>();
-	// for pickup relocator
-	//private List<Pickup> pickups;	
 	public int baseDestination;
 	private int chainCar = -1;
 	

@@ -5,12 +5,18 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import rental.sim.Offer;
-import rental.sim.Ride;
+
+/**
+ * 
+ * Game class is used for book-keeping of all the game data and 
+ * for the initial placement of the relocators on the map.
+ *
+ */
 
 class Game {
-	private static final boolean DEBUG = true;
-	private static final double LongDstThreshold = 0.3;
-	public static final int MAX_PASSENGERS = 1;
+	private static final boolean DEBUG = false;
+	private static final double LongDstThreshold = 0.3; //Used for the goodPlacement() method
+	public static final int MAX_PASSENGERS = 1; //Maximum no. of own passengers in each car.
 	
 	Graph graph;
 	int nRelocator = 0;
@@ -45,17 +51,27 @@ class Game {
 		int nextId;
 	}
 	
-	public int rrdist(int rid1, int rid2) {
+	/**
+	 *  Shortest distance between 2 relocators. 
+	 */
+	public int rrdist(int rid1, int rid2) {	 
 		int loc1 = relocators[rid1].getLocation();
 		int loc2 = relocators[rid2].getLocation();
 		return graph.getPaths()[loc1][loc2].dist;
 	}
 	
+	/**
+	 * 
+	 *  Shortest distance between relocator and node.
+	 */
 	public int rndist(int rid, int nid) {
 		int loc = relocators[rid].getLocation();
 		return graph.getPaths()[loc][nid].dist;
 	}
 	
+	/**
+	 *  Shortest distance between 2 nodes.
+	 */
 	public int nndist(int nid1, int nid2) {
 		return graph.getPaths()[nid1][nid2].dist;
 	}
@@ -78,14 +94,11 @@ class Game {
 	}
 	
 		
-	// a good placement should consider
+	// The placement strategy that considers:
 	// 1. #empty cars @ destination
 	// 2. #degree of destination (important/hub)
 	// 3. path distance
 	private void goodPlacement() {
-		// First rank by 1
-		// Then rank by 2
-		// Finally refine by 3
 		
 		relocators = new Relocator[nRelocator];		
 		int[] degrees = new int[graph.nodeCount()];
@@ -129,7 +142,11 @@ class Game {
 	}
 	
 
-	
+	/**
+	 * 
+	 *  Utility class for "goodPlacement()"
+	 *
+	 */
 	private class CarScore implements Comparable<CarScore> {
 		private int cid;
 		private int dstDegree;
@@ -158,6 +175,7 @@ class Game {
 	}
 	
 	// Rank cars by Shortest Path Distance
+	@SuppressWarnings("unused")
 	private void sspPlacement() {
 		relocators = new Relocator[nRelocator];
 		
@@ -244,7 +262,7 @@ class Game {
 	}
 	
 	
-	public String[] getStaringNodes() {		
+	public String[] getStartingNodes() {		
 		assert(turn == 0); // the initial placement should be called before the game starts
 		String[] startingNodes = new String[nRelocator];
 		

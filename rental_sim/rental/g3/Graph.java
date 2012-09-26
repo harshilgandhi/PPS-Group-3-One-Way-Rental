@@ -20,8 +20,8 @@ class Graph {
 	
 	private int[][] adjacency; // adjacency-matrix
 	private Path[][] paths; // shortest paths.
-	public static int MAP_MAX_DISTANCE = 1;
-	public static int PICKUP_DISTANCE = 0;
+	public static int MAP_MAX_DISTANCE = 1; //Set to diameter of the graph.
+	public static int PICKUP_DISTANCE = 0;  //Initial pickup distance.
 	
 
 	public Graph(Edge[] edges) {
@@ -147,6 +147,11 @@ class Graph {
 		return nodes.get(id);
 	}
 	
+	/**
+	 * 
+	 * Utility class for Dijkstra's algorithm.
+	 *
+	 */
 	class Path implements Comparable<Path> {
 		int dist = Integer.MAX_VALUE;
 		int nextId;
@@ -165,6 +170,11 @@ class Graph {
 		}
 	}
 	
+	/**
+	 * 
+	 *  Utility Class for sorting by the shortest path.
+	 *
+	 */
 	class Distance implements Comparable<Distance> {
 		int carId;
 		int distance;

@@ -5,6 +5,11 @@ import java.util.List;
 
 import rental.sim.RGid;
 
+/**
+ * 
+ * Describes the Car object.
+ *
+ */
 class Car {
 	int cid;
 	int source;
